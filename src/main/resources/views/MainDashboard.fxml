@@ -39,7 +39,8 @@
             </VBox>
 
             <!-- Pie del panel -->
-            <VBox spacing="4" styleClass="sidebar-footer">
+            <VBox spacing="8" styleClass="sidebar-footer">
+                <Button fx:id="btnLogout" text="  Salir" styleClass="menu-button logout-button" onAction="#handleLogout" />
                 <Label styleClass="sidebar-version" text="AJA Desktop v1.0" />
             </VBox>
         </VBox>

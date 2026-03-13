@@ -1,9 +1,14 @@
 package com.aja.controller;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -19,6 +24,8 @@ public class MainDashboardController {
     private Button btnEventos;
     @FXML
     private Button btnMensajes;
+    @FXML
+    private Button btnLogout;
 
     @FXML
     private VBox usuariosContent;
@@ -57,6 +64,21 @@ public class MainDashboardController {
     @FXML
     private void showMensajes() {
         selectMenuItem(3);
+    }
+
+    @FXML
+    private void handleLogout() throws IOException {
+        Stage stage = (Stage) btnLogout.getScene().getWindow();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/login.fxml"));
+        Parent root = loader.load();
+
+        Scene scene = new Scene(root, 420, 380);
+        scene.getStylesheets().add(getClass().getResource("/styles/login.css").toExternalForm());
+
+        stage.setTitle("AJA - Iniciar sesión");
+        stage.setScene(scene);
+        stage.setResizable(false);
+        stage.centerOnScreen();
     }
 
     private void selectMenuItem(int index) {
