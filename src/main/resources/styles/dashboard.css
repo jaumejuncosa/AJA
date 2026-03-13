@@ -93,6 +93,20 @@
     -fx-background-color: #f8fafc;
 }
 
+.primary-action-button {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 8 14;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.primary-action-button:hover {
+    -fx-background-color: #1d4ed8;
+}
+
 .content-page-title {
     -fx-font-size: 26px;
     -fx-font-weight: 700;
@@ -103,4 +117,9 @@
 .content-page-subtitle {
     -fx-font-size: 15px;
     -fx-text-fill: #64748b;
+}
+
+.content-hint {
+    -fx-font-size: 13px;
+    -fx-text-fill: #94a3b8;
 }

@@ -4,7 +4,11 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
@@ -49,33 +53,69 @@
     <!-- Área de contenido derecha -->
     <center>
         <StackPane fx:id="contentArea" styleClass="content-area">
-            <VBox fx:id="usuariosContent" alignment="TOP_LEFT" maxHeight="Infinity" maxWidth="Infinity" spacing="0" styleClass="content-pane" visible="true">
+
+            <!-- Sección Usuarios -->
+            <VBox fx:id="usuariosContent" alignment="TOP_LEFT" maxHeight="Infinity" maxWidth="Infinity" spacing="16" styleClass="content-pane" visible="true">
                 <padding>
-                    <Insets bottom="40" left="40" right="40" top="32" />
+                    <Insets bottom="32" left="32" right="32" top="32" />
                 </padding>
-                <Label styleClass="content-page-title" text="Usuarios" />
-                <Label styleClass="content-page-subtitle" text="Gestiona los usuarios de la aplicación" />
+
+                <!-- Cabecera -->
+                <HBox alignment="CENTER_LEFT" spacing="16">
+                    <VBox spacing="4">
+                        <Label styleClass="content-page-title" text="Usuarios" />
+                        <Label styleClass="content-page-subtitle" text="Gestiona los usuarios registrados en la plataforma" />
+                    </VBox>
+                    <Pane HBox.hgrow="ALWAYS" />
+                    <Button text="Nuevo usuario" styleClass="primary-action-button" />
+                </HBox>
+
+                <!-- Tabla de usuarios (estructura básica, sin datos aún) -->
+                <TableView fx:id="usuariosTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn text="ID" prefWidth="80" />
+                        <TableColumn text="Nombre de usuario" prefWidth="220" />
+                        <TableColumn text="Nombre completo" prefWidth="260" />
+                        <TableColumn text="Rol" prefWidth="120" />
+                        <TableColumn text="Estado" prefWidth="120" />
+                    </columns>
+                </TableView>
             </VBox>
-            <VBox fx:id="foroContent" alignment="TOP_LEFT" maxHeight="Infinity" maxWidth="Infinity" spacing="0" styleClass="content-pane" visible="false">
+
+            <!-- Sección Foro -->
+            <VBox fx:id="foroContent" alignment="TOP_LEFT" maxHeight="Infinity" maxWidth="Infinity" spacing="16" styleClass="content-pane" visible="false">
                 <padding>
-                    <Insets bottom="40" left="40" right="40" top="32" />
+                    <Insets bottom="32" left="32" right="32" top="32" />
                 </padding>
                 <Label styleClass="content-page-title" text="Foro" />
-                <Label styleClass="content-page-subtitle" text="Participa en las discusiones del foro" />
+                <Label styleClass="content-page-subtitle" text="Participa y modera las conversaciones del foro" />
+                <VBox spacing="12">
+                    <Label text="Aquí podrás listar categorías, temas y últimas respuestas." styleClass="content-hint" />
+                </VBox>
             </VBox>
-            <VBox fx:id="eventosContent" alignment="TOP_LEFT" maxHeight="Infinity" maxWidth="Infinity" spacing="0" styleClass="content-pane" visible="false">
+
+            <!-- Sección Eventos -->
+            <VBox fx:id="eventosContent" alignment="TOP_LEFT" maxHeight="Infinity" maxWidth="Infinity" spacing="16" styleClass="content-pane" visible="false">
                 <padding>
-                    <Insets bottom="40" left="40" right="40" top="32" />
+                    <Insets bottom="32" left="32" right="32" top="32" />
                 </padding>
                 <Label styleClass="content-page-title" text="Eventos" />
-                <Label styleClass="content-page-subtitle" text="Consulta y gestiona los eventos" />
+                <Label styleClass="content-page-subtitle" text="Consulta y organiza los próximos eventos" />
+                <VBox spacing="12">
+                    <Label text="Aquí podrás mostrar un calendario o una lista de eventos." styleClass="content-hint" />
+                </VBox>
             </VBox>
-            <VBox fx:id="mensajesContent" alignment="TOP_LEFT" maxHeight="Infinity" maxWidth="Infinity" spacing="0" styleClass="content-pane" visible="false">
+
+            <!-- Sección Mensajes -->
+            <VBox fx:id="mensajesContent" alignment="TOP_LEFT" maxHeight="Infinity" maxWidth="Infinity" spacing="16" styleClass="content-pane" visible="false">
                 <padding>
-                    <Insets bottom="40" left="40" right="40" top="32" />
+                    <Insets bottom="32" left="32" right="32" top="32" />
                 </padding>
                 <Label styleClass="content-page-title" text="Mensajes" />
-                <Label styleClass="content-page-subtitle" text="Revisa tus mensajes" />
+                <Label styleClass="content-page-subtitle" text="Consulta y responde los mensajes recibidos" />
+                <VBox spacing="12">
+                    <Label text="Aquí podrás mostrar una bandeja de entrada de mensajes." styleClass="content-hint" />
+                </VBox>
             </VBox>
         </StackPane>
     </center>
