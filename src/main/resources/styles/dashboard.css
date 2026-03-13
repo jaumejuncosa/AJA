@@ -1,0 +1,106 @@
+/* ============================================
+   AJA Dashboard - Estilo moderno
+   ============================================ */
+
+.dashboard-root {
+    -fx-background-color: #f1f5f9;
+    -fx-font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ----- Panel lateral izquierdo ----- */
+.sidebar {
+    -fx-background-color: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 20, 0, 4, 0);
+}
+
+.sidebar-header {
+    -fx-padding: 0 0 24 0;
+}
+
+.sidebar-logo {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f8fafc;
+    -fx-letter-spacing: 2px;
+}
+
+.sidebar-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #94a3b8;
+}
+
+.sidebar-divider {
+    -fx-padding: 16 0;
+}
+
+.menu-section-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #64748b;
+    -fx-padding: 20 0 0 0;
+}
+
+.menu-container {
+    -fx-padding: 12 0 24 0;
+}
+
+.menu-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cbd5e1;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-padding: 14 16;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-max-width: Infinity;
+    -fx-border-radius: 10;
+}
+
+.menu-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-text-fill: #f8fafc;
+}
+
+.menu-button-selected {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+}
+
+.menu-button-selected:hover {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+}
+
+.sidebar-footer {
+    -fx-padding: 20 0 0 0;
+    -fx-border-color: #334155;
+    -fx-border-width: 1 0 0 0;
+}
+
+.sidebar-version {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748b;
+}
+
+/* ----- Área de contenido derecha ----- */
+.content-area {
+    -fx-background-color: #f8fafc;
+    -fx-padding: 0;
+}
+
+.content-pane {
+    -fx-background-color: #f8fafc;
+}
+
+.content-page-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #0f172a;
+    -fx-padding: 0 0 8 0;
+}
+
+.content-page-subtitle {
+    -fx-font-size: 15px;
+    -fx-text-fill: #64748b;
+}

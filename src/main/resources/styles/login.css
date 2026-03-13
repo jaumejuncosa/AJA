@@ -1,0 +1,104 @@
+/* Variables de tema */
+* {
+    -fx-primary: #2563eb;
+    -fx-primary-dark: #1d4ed8;
+    -fx-background: #f8fafc;
+    -fx-surface: #ffffff;
+    -fx-text: #1e293b;
+    -fx-text-muted: #64748b;
+    -fx-border: #e2e8f0;
+    -fx-error: #dc2626;
+}
+
+.root {
+    -fx-background-color: -fx-background;
+    -fx-font-family: "Segoe UI", "Roboto", sans-serif;
+    -fx-font-size: 14px;
+}
+
+.login-container {
+    -fx-background-color: -fx-surface;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 20, 0, 0, 4);
+}
+
+.app-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-primary;
+}
+
+.app-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: -fx-text-muted;
+}
+
+.field-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-text;
+}
+
+.input-field {
+    -fx-padding: 12 16;
+    -fx-font-size: 14px;
+    -fx-background-color: -fx-background;
+    -fx-background-radius: 8;
+    -fx-border-color: -fx-border;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-prompt-text-fill: -fx-text-muted;
+    -fx-min-height: 44px;
+}
+
+.input-field:focused {
+    -fx-border-color: -fx-primary;
+    -fx-border-width: 2;
+}
+
+.input-field:error {
+    -fx-border-color: -fx-error;
+}
+
+.login-button {
+    -fx-background-color: -fx-primary;
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-padding: 14 24;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-min-height: 48px;
+}
+
+.login-button:hover {
+    -fx-background-color: -fx-primary-dark;
+}
+
+.login-button:pressed {
+    -fx-background-color: #1e40af;
+}
+
+.form-container {
+    -fx-min-width: 320px;
+}
+
+.check-box .box {
+    -fx-background-color: -fx-background;
+    -fx-border-color: -fx-border;
+    -fx-border-radius: 4;
+}
+
+.check-box:selected .box {
+    -fx-background-color: -fx-primary;
+}
+
+.hyperlink {
+    -fx-text-fill: -fx-primary;
+    -fx-underline: false;
+}
+
+.hyperlink:hover {
+    -fx-underline: true;
+}
