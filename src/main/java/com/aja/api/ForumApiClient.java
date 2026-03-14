@@ -1,6 +1,6 @@
 package com.aja.api;
 
-import com.aja.model.UserDto;
+import com.aja.model.ForumDto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,11 +13,11 @@ import java.util.Base64;
 import java.util.List;
 
 /**
- * Cliente para consumir la API REST de usuarios.
- * Proporciona métodos para obtener información de usuarios desde el servidor backend.
- * Utiliza autenticación básica para acceder a los endpoints protegidos.
+ * Cliente para consumir la API REST del foro.
+ * Gestiona la obtención de publicaciones y temas del foro desde el servidor backend,
+ * permitiendo mostrar el contenido disponible a los usuarios.
  */
-public class UserApiClient {
+public class ForumApiClient {
 
     private static final String BASE_URL = "http://localhost:8080";
     private static final String ADMIN_USER = "admin";
@@ -29,26 +29,26 @@ public class UserApiClient {
     /**
      * Constructor que inicializa el cliente HTTP y el mapper de JSON.
      */
-    public UserApiClient() {
+    public ForumApiClient() {
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
     }
 
     /**
-     * Obtiene la lista completa de usuarios registrados en el sistema.
-     * Realiza una petición GET al endpoint /api/user con autenticación básica.
+     * Obtiene la lista completa de publicaciones del foro.
+     * Realiza una petición GET al endpoint /api/forum con autenticación básica.
      *
-     * @return Lista de objetos UserDto con la información de todos los usuarios
+     * @return Lista de objetos ForumDto con la información de todas las publicaciones
      * @throws Exception Si ocurre un error en la comunicación con el servidor
      *                   o en el procesamiento de la respuesta JSON
      */
-    public List<UserDto> getAllUsers() throws Exception {
+    public List<ForumDto> getAllForumPosts() throws Exception {
         String auth = ADMIN_USER + ":" + ADMIN_PASS;
         String basicAuth = "Basic " + Base64.getEncoder()
                 .encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/api/user"))
+                .uri(URI.create(BASE_URL + "/api/forum"))
                 .header("Accept", "application/json")
                 .header("Authorization", basicAuth)
                 .GET()
@@ -58,13 +58,12 @@ public class UserApiClient {
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
-            throw new RuntimeException("Error API /api/user: " + response.statusCode());
+            throw new RuntimeException("Error API /api/forum: " + response.statusCode());
         }
 
         return objectMapper.readValue(
                 response.body(),
-                new TypeReference<List<UserDto>>() {}
+                new TypeReference<List<ForumDto>>() {}
         );
     }
 }
-

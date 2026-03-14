@@ -87,11 +87,26 @@
                 <padding>
                     <Insets bottom="32" left="32" right="32" top="32" />
                 </padding>
-                <Label styleClass="content-page-title" text="Foro" />
-                <Label styleClass="content-page-subtitle" text="Participa y modera las conversaciones del foro" />
-                <VBox spacing="12">
-                    <Label text="Aquí podrás listar categorías, temas y últimas respuestas." styleClass="content-hint" />
-                </VBox>
+
+                <!-- Cabecera -->
+                <HBox alignment="CENTER_LEFT" spacing="16">
+                    <VBox spacing="4">
+                        <Label styleClass="content-page-title" text="Foro" />
+                        <Label styleClass="content-page-subtitle" text="Participa y modera las conversaciones del foro" />
+                    </VBox>
+                    <Pane HBox.hgrow="ALWAYS" />
+                    <Button text="Nuevo tema" styleClass="primary-action-button" />
+                </HBox>
+
+                <!-- Tabla de foro -->
+                <TableView fx:id="foroTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colForumId" text="ID" prefWidth="80" />
+                        <TableColumn fx:id="colForumTitle" text="Título" prefWidth="300" />
+                        <TableColumn fx:id="colForumAuthor" text="Autor" prefWidth="150" />
+                        <TableColumn fx:id="colForumDate" text="Fecha" prefWidth="150" />
+                    </columns>
+                </TableView>
             </VBox>
 
             <!-- Sección Eventos -->
@@ -99,11 +114,27 @@
                 <padding>
                     <Insets bottom="32" left="32" right="32" top="32" />
                 </padding>
-                <Label styleClass="content-page-title" text="Eventos" />
-                <Label styleClass="content-page-subtitle" text="Consulta y organiza los próximos eventos" />
-                <VBox spacing="12">
-                    <Label text="Aquí podrás mostrar un calendario o una lista de eventos." styleClass="content-hint" />
-                </VBox>
+
+                <!-- Cabecera -->
+                <HBox alignment="CENTER_LEFT" spacing="16">
+                    <VBox spacing="4">
+                        <Label styleClass="content-page-title" text="Eventos" />
+                        <Label styleClass="content-page-subtitle" text="Consulta y organiza los próximos eventos" />
+                    </VBox>
+                    <Pane HBox.hgrow="ALWAYS" />
+                    <Button text="Nuevo evento" styleClass="primary-action-button" />
+                </HBox>
+
+                <!-- Tabla de eventos -->
+                <TableView fx:id="eventosTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colEventId" text="ID" prefWidth="80" />
+                        <TableColumn fx:id="colEventTitle" text="Título" prefWidth="200" />
+                        <TableColumn fx:id="colEventDescription" text="Descripción" prefWidth="300" />
+                        <TableColumn fx:id="colEventDate" text="Fecha" prefWidth="150" />
+                        <TableColumn fx:id="colEventLocation" text="Ubicación" prefWidth="200" />
+                    </columns>
+                </TableView>
             </VBox>
 
             <!-- Sección Mensajes -->
@@ -111,11 +142,28 @@
                 <padding>
                     <Insets bottom="32" left="32" right="32" top="32" />
                 </padding>
-                <Label styleClass="content-page-title" text="Mensajes" />
-                <Label styleClass="content-page-subtitle" text="Consulta y responde los mensajes recibidos" />
-                <VBox spacing="12">
-                    <Label text="Aquí podrás mostrar una bandeja de entrada de mensajes." styleClass="content-hint" />
-                </VBox>
+
+                <!-- Cabecera -->
+                <HBox alignment="CENTER_LEFT" spacing="16">
+                    <VBox spacing="4">
+                        <Label styleClass="content-page-title" text="Mensajes" />
+                        <Label styleClass="content-page-subtitle" text="Consulta y responde los mensajes recibidos" />
+                    </VBox>
+                    <Pane HBox.hgrow="ALWAYS" />
+                    <Button text="Nuevo mensaje" styleClass="primary-action-button" />
+                </HBox>
+
+                <!-- Tabla de mensajes -->
+                <TableView fx:id="mensajesTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colMessageId" text="ID" prefWidth="80" />
+                        <TableColumn fx:id="colMessageSender" text="Remitente" prefWidth="150" />
+                        <TableColumn fx:id="colMessageReceiver" text="Destinatario" prefWidth="150" />
+                        <TableColumn fx:id="colMessageContent" text="Contenido" prefWidth="300" />
+                        <TableColumn fx:id="colMessageDate" text="Fecha" prefWidth="150" />
+                        <TableColumn fx:id="colMessageRead" text="Leído" prefWidth="100" />
+                    </columns>
+                </TableView>
             </VBox>
         </StackPane>
     </center>

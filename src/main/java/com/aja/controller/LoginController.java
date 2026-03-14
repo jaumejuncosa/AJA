@@ -13,7 +13,9 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 /**
- * Controlador de la pantalla de login
+ * Controlador para la pantalla de inicio de sesión de la aplicación AJA Desktop.
+ * Gestiona la autenticación de usuarios y la navegación hacia el panel principal.
+ * Proporciona validación de campos y manejo de errores de autenticación.
  */
 public class LoginController {
 private final AuthService authService = new AuthService();
@@ -32,6 +34,10 @@ private final AuthService authService = new AuthService();
     @FXML
     private Hyperlink forgotPasswordLink;
 
+    /**
+     * Método de inicialización llamado automáticamente por JavaFX.
+     * Configura los eventos de teclado para permitir login con la tecla Enter.
+     */
     @FXML
     public void initialize() {
         // Permitir iniciar sesión con Enter
@@ -39,12 +45,23 @@ private final AuthService authService = new AuthService();
         usernameField.setOnKeyPressed(this::handleKeyPressed);
     }
 
+    /**
+     * Maneja los eventos de teclado para los campos de entrada.
+     * Permite iniciar sesión presionando la tecla Enter.
+     *
+     * @param event El evento de teclado generado
+     */
     private void handleKeyPressed(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
             handleLogin();
         }
     }
 
+    /**
+     * Procesa el intento de inicio de sesión del usuario.
+     * Valida los campos de entrada, autentica las credenciales y navega
+     * al panel principal si la autenticación es exitosa.
+     */
     @FXML
     private void handleLogin() {
     String username = usernameField.getText();
@@ -81,6 +98,12 @@ private final AuthService authService = new AuthService();
     }
 }
 
+    /**
+     * Navega desde la pantalla de login al panel principal (dashboard).
+     * Carga la vista MainDashboard.fxml y configura la nueva escena.
+     *
+     * @throws IOException Si ocurre un error al cargar el archivo FXML
+     */
     private void navigateToDashboard() throws IOException {
         Stage stage = (Stage) loginButton.getScene().getWindow();
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/MainDashboard.fxml"));
@@ -95,12 +118,23 @@ private final AuthService authService = new AuthService();
         stage.centerOnScreen();
     }
 
+    /**
+     * Maneja la acción del enlace "Olvidé mi contraseña".
+     * Muestra un mensaje informativo indicando que la funcionalidad
+     * debe ser implementada según los requisitos específicos.
+     */
     @FXML
     private void handleForgotPassword() {
         showInfo("Recuperar contraseña", 
                 "Funcionalidad de recuperación de contraseña.\n(Implementar según tus necesidades)");
     }
 
+    /**
+     * Muestra un diálogo de error con el título y mensaje especificados.
+     *
+     * @param title El título del diálogo de error
+     * @param message El mensaje descriptivo del error
+     */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -109,6 +143,12 @@ private final AuthService authService = new AuthService();
         alert.showAndWait();
     }
 
+    /**
+     * Muestra un diálogo informativo con el título y mensaje especificados.
+     *
+     * @param title El título del diálogo informativo
+     * @param message El mensaje informativo a mostrar
+     */
     private void showInfo(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);

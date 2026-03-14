@@ -9,10 +9,19 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 /**
- * Aplicación principal AJA Desktop
+ * Clase principal de la aplicación AJA Desktop.
+ * Punto de entrada que inicializa la interfaz gráfica de usuario
+ * y configura la ventana principal de la aplicación.
  */
 public class App extends Application {
 
+    /**
+     * Método principal de JavaFX que configura y muestra la interfaz de usuario.
+     * Carga la pantalla de login como primera vista de la aplicación.
+     *
+     * @param stage El escenario principal de la aplicación donde se mostrarán las vistas
+     * @throws IOException Si ocurre un error al cargar el archivo FXML de login
+     */
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/login.fxml"));
@@ -27,6 +36,11 @@ public class App extends Application {
         stage.show();
     }
 
+    /**
+     * Método main que lanza la aplicación JavaFX.
+     *
+     * @param args Argumentos de línea de comandos (no utilizados actualmente)
+     */
     public static void main(String[] args) {
         launch(args);
     }
