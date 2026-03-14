@@ -72,6 +72,16 @@
     -fx-text-fill: white;
 }
 
+.logout-button {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+}
+
+.logout-button:hover {
+    -fx-background-color: #1d4ed8;
+    -fx-text-fill: white;
+}
+
 .sidebar-footer {
     -fx-padding: 20 0 0 0;
     -fx-border-color: #334155;
