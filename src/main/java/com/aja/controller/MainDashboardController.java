@@ -1,10 +1,17 @@
 package com.aja.controller;
 
+import com.aja.api.UserApiClient;
+import com.aja.model.UserDto;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -36,6 +43,22 @@ public class MainDashboardController {
     @FXML
     private VBox mensajesContent;
 
+    @FXML
+    private TableView<UserDto> usuariosTable;
+    @FXML
+    private TableColumn<UserDto, Long> colUserId;
+    @FXML
+    private TableColumn<UserDto, String> colUsername;
+    @FXML
+    private TableColumn<UserDto, String> colEmail;
+    @FXML
+    private TableColumn<UserDto, Integer> colRole;
+    @FXML
+    private TableColumn<UserDto, Boolean> colActive;
+
+    private final UserApiClient userApiClient = new UserApiClient();
+    private final ObservableList<UserDto> usuarios = FXCollections.observableArrayList();
+
     private List<Button> menuButtons;
     private List<VBox> contentPanes;
 
@@ -44,6 +67,17 @@ public class MainDashboardController {
         menuButtons = List.of(btnUsuarios, btnForo, btnEventos, btnMensajes);
         contentPanes = List.of(usuariosContent, foroContent, eventosContent, mensajesContent);
         selectMenuItem(0); // Usuarios por defecto
+
+        if (usuariosTable != null) {
+            colUserId.setCellValueFactory(new PropertyValueFactory<>("id"));
+            colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
+            colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+            colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
+            colActive.setCellValueFactory(new PropertyValueFactory<>("isactive"));
+
+            usuariosTable.setItems(usuarios);
+            loadUsers();
+        }
     }
 
     @FXML
@@ -79,6 +113,15 @@ public class MainDashboardController {
         stage.setScene(scene);
         stage.setResizable(false);
         stage.centerOnScreen();
+    }
+
+    private void loadUsers() {
+        try {
+            List<UserDto> list = userApiClient.getAllUsers();
+            usuarios.setAll(list);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void selectMenuItem(int index) {

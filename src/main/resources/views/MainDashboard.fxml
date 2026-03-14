@@ -70,14 +70,14 @@
                     <Button text="Nuevo usuario" styleClass="primary-action-button" />
                 </HBox>
 
-                <!-- Tabla de usuarios (estructura básica, sin datos aún) -->
+                <!-- Tabla de usuarios (rellenada desde /api/user) -->
                 <TableView fx:id="usuariosTable" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn text="ID" prefWidth="80" />
-                        <TableColumn text="Nombre de usuario" prefWidth="220" />
-                        <TableColumn text="Nombre completo" prefWidth="260" />
-                        <TableColumn text="Rol" prefWidth="120" />
-                        <TableColumn text="Estado" prefWidth="120" />
+                        <TableColumn fx:id="colUserId" text="ID" prefWidth="80" />
+                        <TableColumn fx:id="colUsername" text="Nombre de usuario" prefWidth="220" />
+                        <TableColumn fx:id="colEmail" text="Email" prefWidth="260" />
+                        <TableColumn fx:id="colRole" text="Rol" prefWidth="120" />
+                        <TableColumn fx:id="colActive" text="Activo" prefWidth="120" />
                     </columns>
                 </TableView>
             </VBox>
