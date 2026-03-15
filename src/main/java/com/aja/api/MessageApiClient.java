@@ -67,4 +67,36 @@ public class MessageApiClient {
                 new TypeReference<List<MessageDto>>() {}
         );
     }
+
+    /**
+     * Crea un nuevo mensaje enviando una petición POST a /api/messages.
+     *
+     * @param message El DTO del mensaje a crear
+     * @return El DTO del mensaje creado (con ID asignado)
+     * @throws Exception Si ocurre un error en la comunicación o parseo
+     */
+    public MessageDto createMessage(MessageDto message) throws Exception {
+        String auth = ADMIN_USER + ":" + ADMIN_PASS;
+        String basicAuth = "Basic " + Base64.getEncoder()
+                .encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+
+        String json = objectMapper.writeValueAsString(message);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/api/messages"))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", basicAuth)
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        HttpResponse<String> response =
+                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 201 && response.statusCode() != 200) {
+            throw new RuntimeException("Error creando mensaje: " + response.statusCode() + " - " + response.body());
+        }
+
+        return objectMapper.readValue(response.body(), MessageDto.class);
+    }
 }

@@ -67,7 +67,7 @@
                         <Label styleClass="content-page-subtitle" text="Gestiona los usuarios registrados en la plataforma" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button text="Nuevo usuario" styleClass="primary-action-button" />
+                    <Button fx:id="newUserButton" text="Nuevo usuario" styleClass="primary-action-button" onAction="#handleNewUser" />
                 </HBox>
 
                 <!-- Tabla de usuarios (rellenada desde /api/user) -->
@@ -95,7 +95,7 @@
                         <Label styleClass="content-page-subtitle" text="Participa y modera las conversaciones del foro" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button text="Nuevo tema" styleClass="primary-action-button" />
+                    <Button fx:id="newForumButton" text="Nuevo tema" styleClass="primary-action-button" onAction="#handleNewForum" />
                 </HBox>
 
                 <!-- Tabla de foro -->
@@ -122,7 +122,7 @@
                         <Label styleClass="content-page-subtitle" text="Consulta y organiza los próximos eventos" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button text="Nuevo evento" styleClass="primary-action-button" />
+                    <Button fx:id="newEventButton" text="Nuevo evento" styleClass="primary-action-button" onAction="#handleNewEvent" />
                 </HBox>
 
                 <!-- Tabla de eventos -->
@@ -150,7 +150,7 @@
                         <Label styleClass="content-page-subtitle" text="Consulta y responde los mensajes recibidos" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button text="Nuevo mensaje" styleClass="primary-action-button" />
+                    <Button fx:id="newMessageButton" text="Nuevo mensaje" styleClass="primary-action-button" onAction="#handleNewMessage" />
                 </HBox>
 
                 <!-- Tabla de mensajes -->

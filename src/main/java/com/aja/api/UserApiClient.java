@@ -67,5 +67,67 @@ public class UserApiClient {
                 new TypeReference<List<UserDto>>() {}
         );
     }
+
+    /**
+     * Obtiene la información de un solo usuario por su ID.
+     * Hace una petición GET a /api/user/{id}.
+     *
+     * @param id ID del usuario a consultar
+     * @return DTO del usuario
+     * @throws Exception Si ocurre un error en la comunicación o parseo
+     */
+    public UserDto getUserById(Long id) throws Exception {
+        String auth = ADMIN_USER + ":" + ADMIN_PASS;
+        String basicAuth = "Basic " + Base64.getEncoder()
+                .encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/api/user/" + id))
+                .header("Accept", "application/json")
+                .header("Authorization", basicAuth)
+                .GET()
+                .build();
+
+        HttpResponse<String> response =
+                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Error API /api/user/" + id + ": " + response.statusCode());
+        }
+
+        return objectMapper.readValue(response.body(), UserDto.class);
+    }
+
+    /**
+     * Crea un nuevo usuario enviando una petición POST a /api/user.
+     *
+     * @param user El DTO del usuario a crear
+     * @return El DTO del usuario creado (con ID asignado)
+     * @throws Exception Si ocurre un error en la comunicación o parseo
+     */
+    public UserDto createUser(UserDto user) throws Exception {
+        String auth = ADMIN_USER + ":" + ADMIN_PASS;
+        String basicAuth = "Basic " + Base64.getEncoder()
+                .encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+
+        String json = objectMapper.writeValueAsString(user);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/api/user"))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", basicAuth)
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        HttpResponse<String> response =
+                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 201 && response.statusCode() != 200) {
+            throw new RuntimeException("Error creando usuario: " + response.statusCode() + " - " + response.body());
+        }
+
+        return objectMapper.readValue(response.body(), UserDto.class);
+    }
 }
 

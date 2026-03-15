@@ -11,6 +11,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.prefs.Preferences;
 
 /**
  * Controlador para la pantalla de inicio de sesión de la aplicación AJA Desktop.
@@ -19,6 +20,10 @@ import java.io.IOException;
  */
 public class LoginController {
 private final AuthService authService = new AuthService();
+    private static final Preferences prefs = Preferences.userNodeForPackage(LoginController.class);
+    private static final String PREF_USERNAME = "username";
+    private static final String PREF_PASSWORD = "password";
+
     @FXML
     private TextField usernameField;
 
@@ -36,13 +41,23 @@ private final AuthService authService = new AuthService();
 
     /**
      * Método de inicialización llamado automáticamente por JavaFX.
-     * Configura los eventos de teclado para permitir login con la tecla Enter.
+     * Configura los eventos de teclado para permitir login con la tecla Enter
+     * y carga las credenciales guardadas si existen.
      */
     @FXML
     public void initialize() {
         // Permitir iniciar sesión con Enter
         passwordField.setOnKeyPressed(this::handleKeyPressed);
         usernameField.setOnKeyPressed(this::handleKeyPressed);
+
+        // Cargar credenciales guardadas
+        String savedUsername = prefs.get(PREF_USERNAME, null);
+        String savedPassword = prefs.get(PREF_PASSWORD, null);
+        if (savedUsername != null && savedPassword != null) {
+            usernameField.setText(savedUsername);
+            passwordField.setText(savedPassword);
+            rememberCheckBox.setSelected(true);
+        }
     }
 
     /**
@@ -88,6 +103,15 @@ private final AuthService authService = new AuthService();
         passwordField.clear();
         passwordField.requestFocus();
         return;
+    }
+
+    // Guardar o borrar credenciales según el checkbox
+    if (rememberCheckBox.isSelected()) {
+        prefs.put(PREF_USERNAME, username);
+        prefs.put(PREF_PASSWORD, password);
+    } else {
+        prefs.remove(PREF_USERNAME);
+        prefs.remove(PREF_PASSWORD);
     }
 
     // Si todo es correcto, navegar al dashboard

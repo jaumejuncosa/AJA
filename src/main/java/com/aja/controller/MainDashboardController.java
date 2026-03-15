@@ -14,11 +14,19 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -42,6 +50,15 @@ public class MainDashboardController {
     private Button btnMensajes;
     @FXML
     private Button btnLogout;
+
+    @FXML
+    private Button newUserButton;
+    @FXML
+    private Button newForumButton;
+    @FXML
+    private Button newEventButton;
+    @FXML
+    private Button newMessageButton;
 
     @FXML
     private VBox usuariosContent;
@@ -140,6 +157,16 @@ public class MainDashboardController {
 
             usuariosTable.setItems(usuarios);
             loadUsers();
+
+            // Al hacer doble click sobre un usuario, solicitar detalle por ID.
+            usuariosTable.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2) {
+                    UserDto selected = usuariosTable.getSelectionModel().getSelectedItem();
+                    if (selected != null) {
+                        showUserDetails(selected.getId());
+                    }
+                }
+            });
         }
 
         if (eventosTable != null) {
@@ -247,6 +274,39 @@ public class MainDashboardController {
     }
 
     /**
+     * Solicita al backend la información completa de un usuario por su ID.
+     * Muestra un diálogo con los datos obtenidos.
+     *
+     * @param userId ID del usuario a consultar
+     */
+    private void showUserDetails(Long userId) {
+        try {
+            UserDto user = userApiClient.getUserById(userId);
+            String content = String.format(
+                    "ID: %d\nUsuario: %s\nEmail: %s\nRol: %s\nActivo: %s",
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole(),
+                    user.getIsactive()
+            );
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Detalle de usuario");
+            alert.setHeaderText("Usuario con ID " + userId);
+            alert.setContentText(content);
+            alert.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("No se pudo cargar el usuario");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    /**
      * Carga la lista de eventos desde la API y actualiza la tabla correspondiente.
      * En caso de error en la comunicación con el servidor, imprime el error en consola.
      */
@@ -304,5 +364,339 @@ public class MainDashboardController {
             content.setVisible(selected);
             content.setManaged(selected);
         }
+    }
+
+    @FXML
+    private void handleNewUser() {
+        System.out.println("handleNewUser called");
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Nuevo usuario");
+        dialog.setResizable(false);
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new javafx.geometry.Insets(20));
+        vbox.setPrefWidth(460);
+        vbox.getStyleClass().add("content-pane");
+
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Nombre de usuario");
+
+        TextField passwordField = new TextField();
+        passwordField.setPromptText("Contraseña");
+
+        TextField emailField = new TextField();
+        emailField.setPromptText("Email");
+
+        TextField roleField = new TextField();
+        roleField.setPromptText("Rol (número, ej: 1)");
+
+        CheckBox activeCheck = new CheckBox("Activo");
+
+        Button okButton = new Button("Crear");
+        Button cancelButton = new Button("Cancelar");
+
+        okButton.getStyleClass().add("primary-action-button");
+        cancelButton.getStyleClass().add("primary-action-button");
+
+        HBox buttons = new HBox(10, okButton, cancelButton);
+
+        vbox.getChildren().addAll(
+            new Label("Nombre de usuario:"), usernameField,
+            new Label("Contraseña:"), passwordField,
+            new Label("Email:"), emailField,
+            new Label("Rol:"), roleField,
+            activeCheck,
+            buttons
+        );
+
+        okButton.setOnAction(e -> {
+            try {
+                String username = usernameField.getText().trim();
+                String password = passwordField.getText().trim();
+                String email = emailField.getText().trim();
+                int role = Integer.parseInt(roleField.getText().trim());
+                boolean active = activeCheck.isSelected();
+
+                if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
+                    showError("Campos requeridos", "Todos los campos son obligatorios.");
+                    return;
+                }
+
+                UserDto newUser = new UserDto();
+                newUser.setUsername(username);
+                newUser.setEmail(email);
+                newUser.setRole(role);
+                newUser.setIsactive(active);
+
+                userApiClient.createUser(newUser);
+                loadUsers(); // Refrescar tabla
+                dialog.close();
+
+                Alert success = new Alert(Alert.AlertType.INFORMATION);
+                success.setTitle("Éxito");
+                success.setHeaderText("Usuario creado");
+                success.setContentText("El usuario ha sido creado exitosamente.");
+                success.showAndWait();
+
+            } catch (NumberFormatException ex) {
+                showError("Error", "El rol debe ser un número entero.");
+            } catch (Exception ex) {
+                showError("Error", "No se pudo crear el usuario: " + ex.getMessage());
+            }
+        });
+
+        cancelButton.setOnAction(e -> dialog.close());
+
+        Scene scene = new Scene(vbox);
+        scene.getStylesheets().add(getClass().getResource("/styles/dashboard.css").toExternalForm());
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    @FXML
+    private void handleNewForum() {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Nuevo tema");
+        dialog.setResizable(false);
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new javafx.geometry.Insets(20));
+        vbox.setPrefWidth(460);
+        vbox.getStyleClass().add("content-pane");
+
+        TextField titleField = new TextField();
+        titleField.setPromptText("Título del tema");
+
+        TextField authorField = new TextField();
+        authorField.setPromptText("Autor (username)");
+
+        Button okButton = new Button("Crear");
+        Button cancelButton = new Button("Cancelar");
+
+        okButton.getStyleClass().add("primary-action-button");
+        cancelButton.getStyleClass().add("primary-action-button");
+
+        HBox buttons = new HBox(10, okButton, cancelButton);
+
+        vbox.getChildren().addAll(
+            new Label("Título:"), titleField,
+            new Label("Autor:"), authorField,
+            buttons
+        );
+
+        okButton.setOnAction(e -> {
+            try {
+                String title = titleField.getText().trim();
+                String author = authorField.getText().trim();
+
+                if (title.isEmpty() || author.isEmpty()) {
+                    showError("Campos requeridos", "Todos los campos son obligatorios.");
+                    return;
+                }
+
+                ForumDto newPost = new ForumDto();
+                newPost.setTitle(title);
+                newPost.setAuthor(author);
+                // Date se puede omitir, el servidor lo asigna
+
+                forumApiClient.createForumPost(newPost);
+                loadForumPosts(); // Refrescar tabla
+                dialog.close();
+
+                Alert success = new Alert(Alert.AlertType.INFORMATION);
+                success.setTitle("Éxito");
+                success.setHeaderText("Tema creado");
+                success.setContentText("El tema ha sido creado exitosamente.");
+                success.showAndWait();
+
+            } catch (Exception ex) {
+                showError("Error", "No se pudo crear el tema: " + ex.getMessage());
+            }
+        });
+
+        cancelButton.setOnAction(e -> dialog.close());
+
+        Scene scene = new Scene(vbox);
+        scene.getStylesheets().add(getClass().getResource("/styles/dashboard.css").toExternalForm());
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    @FXML
+    private void handleNewEvent() {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Nuevo evento");
+        dialog.setResizable(false);
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new javafx.geometry.Insets(20));
+        vbox.setPrefWidth(460);
+        vbox.getStyleClass().add("content-pane");
+
+        TextField titleField = new TextField();
+        titleField.setPromptText("Título del evento");
+
+        TextField descriptionField = new TextField();
+        descriptionField.setPromptText("Descripción");
+
+        TextField dateField = new TextField();
+        dateField.setPromptText("Fecha (ej: 2026-03-15)");
+
+        TextField locationField = new TextField();
+        locationField.setPromptText("Ubicación");
+
+        Button okButton = new Button("Crear");
+        Button cancelButton = new Button("Cancelar");
+
+        okButton.getStyleClass().add("primary-action-button");
+        cancelButton.getStyleClass().add("primary-action-button");
+
+        HBox buttons = new HBox(10, okButton, cancelButton);
+
+        vbox.getChildren().addAll(
+            new Label("Título:"), titleField,
+            new Label("Descripción:"), descriptionField,
+            new Label("Fecha:"), dateField,
+            new Label("Ubicación:"), locationField,
+            buttons
+        );
+
+        okButton.setOnAction(e -> {
+            try {
+                String title = titleField.getText().trim();
+                String description = descriptionField.getText().trim();
+                String date = dateField.getText().trim();
+                String location = locationField.getText().trim();
+
+                if (title.isEmpty() || description.isEmpty() || date.isEmpty() || location.isEmpty()) {
+                    showError("Campos requeridos", "Todos los campos son obligatorios.");
+                    return;
+                }
+
+                EventDto newEvent = new EventDto();
+                newEvent.setTitle(title);
+                newEvent.setDescription(description);
+                newEvent.setDate(date);
+                newEvent.setLocation(location);
+
+                eventApiClient.createEvent(newEvent);
+                loadEvents(); // Refrescar tabla
+                dialog.close();
+
+                Alert success = new Alert(Alert.AlertType.INFORMATION);
+                success.setTitle("Éxito");
+                success.setHeaderText("Evento creado");
+                success.setContentText("El evento ha sido creado exitosamente.");
+                success.showAndWait();
+
+            } catch (Exception ex) {
+                showError("Error", "No se pudo crear el evento: " + ex.getMessage());
+            }
+        });
+
+        cancelButton.setOnAction(e -> dialog.close());
+
+        Scene scene = new Scene(vbox);
+        scene.getStylesheets().add(getClass().getResource("/styles/dashboard.css").toExternalForm());
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    @FXML
+    private void handleNewMessage() {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Nuevo mensaje");
+        dialog.setResizable(false);
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new javafx.geometry.Insets(20));
+        vbox.setPrefWidth(460);
+        vbox.getStyleClass().add("content-pane");
+
+        TextField senderField = new TextField();
+        senderField.setPromptText("Remitente (username)");
+
+        TextField receiverField = new TextField();
+        receiverField.setPromptText("Destinatario (username)");
+
+        TextField contentField = new TextField();
+        contentField.setPromptText("Contenido del mensaje");
+
+        CheckBox readCheck = new CheckBox("Marcar como leído");
+
+        Button okButton = new Button("Enviar");
+        Button cancelButton = new Button("Cancelar");
+
+        okButton.getStyleClass().add("primary-action-button");
+        cancelButton.getStyleClass().add("primary-action-button");
+
+        HBox buttons = new HBox(10, okButton, cancelButton);
+
+        vbox.getChildren().addAll(
+            new Label("Remitente:"), senderField,
+            new Label("Destinatario:"), receiverField,
+            new Label("Contenido:"), contentField,
+            readCheck,
+            buttons
+        );
+
+        okButton.setOnAction(e -> {
+            try {
+                String sender = senderField.getText().trim();
+                String receiver = receiverField.getText().trim();
+                String content = contentField.getText().trim();
+                boolean read = readCheck.isSelected();
+
+                if (sender.isEmpty() || receiver.isEmpty() || content.isEmpty()) {
+                    showError("Campos requeridos", "Todos los campos son obligatorios.");
+                    return;
+                }
+
+                MessageDto newMessage = new MessageDto();
+                newMessage.setSender(sender);
+                newMessage.setReceiver(receiver);
+                newMessage.setContent(content);
+                newMessage.setRead(read);
+                // Date se puede omitir, el servidor lo asigna
+
+                messageApiClient.createMessage(newMessage);
+                loadMessages(); // Refrescar tabla
+                dialog.close();
+
+                Alert success = new Alert(Alert.AlertType.INFORMATION);
+                success.setTitle("Éxito");
+                success.setHeaderText("Mensaje enviado");
+                success.setContentText("El mensaje ha sido enviado exitosamente.");
+                success.showAndWait();
+
+            } catch (Exception ex) {
+                showError("Error", "No se pudo enviar el mensaje: " + ex.getMessage());
+            }
+        });
+
+        cancelButton.setOnAction(e -> dialog.close());
+
+        Scene scene = new Scene(vbox);
+        scene.getStylesheets().add(getClass().getResource("/styles/dashboard.css").toExternalForm());
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    /**
+     * Muestra un diálogo de error con el título y mensaje especificados.
+     *
+     * @param title El título del diálogo de error
+     * @param message El mensaje descriptivo del error
+     */
+    private void showError(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
