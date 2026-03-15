@@ -115,6 +115,7 @@ private final AuthService authService = new AuthService();
         stage.setTitle("AJA - Panel de control");
         stage.setScene(scene);
         stage.setResizable(true);
+        stage.setMaximized(true);
         stage.centerOnScreen();
     }
 
