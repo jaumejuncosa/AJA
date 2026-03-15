@@ -1,5 +1,6 @@
 package com.aja.api;
 
+import com.aja.config.AppConfig;
 import com.aja.model.UserDto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +20,7 @@ import java.util.List;
  */
 public class UserApiClient {
 
-    private static final String BASE_URL = "http://localhost:8080";
+    private static final String BASE_URL = AppConfig.getApiBaseUrl();
     private static final String ADMIN_USER = "admin";
     private static final String ADMIN_PASS = "1234";
 
