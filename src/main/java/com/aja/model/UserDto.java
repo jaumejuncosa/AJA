@@ -10,8 +10,8 @@ public class UserDto {
     private Long id;
     private String username;
     private String email;
-    private Integer role;
-    private Boolean isactive;
+    private String role;
+    private Boolean isActive;
 
     /**
      * Obtiene el identificador único del usuario.
@@ -63,34 +63,42 @@ public class UserDto {
 
     /**
      * Obtiene el rol del usuario en el sistema.
-     * @return el rol del usuario (representado como entero)
+     * @return el rol del usuario (como string)
      */
-    public Integer getRole() {
+    public String getRole() {
         return role;
     }
 
     /**
      * Establece el rol del usuario en el sistema.
-     * @param role el rol del usuario (representado como entero)
+     * @param role el rol del usuario (como string)
      */
-    public void setRole(Integer role) {
+    public void setRole(String role) {
         this.role = role;
+    }
+
+    /**
+     * Obtiene el rol del usuario como enumeración.
+     * @return el rol del usuario como objeto Role
+     */
+    public Role getRoleEnum() {
+        return role != null ? Role.fromString(role) : null;
     }
 
     /**
      * Indica si el usuario está activo en el sistema.
      * @return true si el usuario está activo, false en caso contrario
      */
-    public Boolean getIsactive() {
-        return isactive;
+    public Boolean getIsActive() {
+        return isActive;
     }
 
     /**
      * Establece el estado de actividad del usuario.
-     * @param isactive true para activar el usuario, false para desactivarlo
+     * @param isActive true para activar el usuario, false para desactivarlo
      */
-    public void setIsactive(Boolean isactive) {
-        this.isactive = isactive;
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }
 

@@ -27,6 +27,18 @@
                 <Label styleClass="sidebar-subtitle" text="Panel de control" />
             </VBox>
 
+            <!-- Información del usuario -->
+            <VBox spacing="4" styleClass="user-info">
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label styleClass="user-label" text="Usuario:" />
+                    <Label fx:id="lblUsername" styleClass="user-name" text="Usuario" />
+                </HBox>
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label styleClass="user-label" text="ROL:" />
+                    <Label fx:id="lblUserRole" styleClass="user-role" text="ROL" />
+                </HBox>
+            </VBox>
+
             <!-- Separador -->
             <Separator styleClass="sidebar-divider" />
 
@@ -44,7 +56,7 @@
 
             <!-- Pie del panel -->
             <VBox spacing="8" styleClass="sidebar-footer">
-                <Button fx:id="btnLogout" text="  Salir" styleClass="menu-button logout-button" onAction="#handleLogout" />
+                <Button fx:id="btnLogout" text="  Cerrar sesión" styleClass="menu-button logout-button" onAction="#handleLogout" />
                 <Label styleClass="sidebar-version" text="AJA Desktop v1.0" />
             </VBox>
         </VBox>

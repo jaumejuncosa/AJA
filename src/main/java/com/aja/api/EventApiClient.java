@@ -9,8 +9,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -21,8 +19,6 @@ import java.util.List;
 public class EventApiClient {
 
     private static final String BASE_URL = AppConfig.getApiBaseUrl();
-    private static final String ADMIN_USER = "admin";
-    private static final String ADMIN_PASS = "1234";
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -31,7 +27,7 @@ public class EventApiClient {
      * Constructor que inicializa el cliente HTTP y el mapper de JSON.
      */
     public EventApiClient() {
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = HttpClientProvider.getClient();
         this.objectMapper = new ObjectMapper();
     }
 
@@ -44,14 +40,9 @@ public class EventApiClient {
      *                   o en el procesamiento de la respuesta JSON
      */
     public List<EventDto> getAllEvents() throws Exception {
-        String auth = ADMIN_USER + ":" + ADMIN_PASS;
-        String basicAuth = "Basic " + Base64.getEncoder()
-                .encodeToString(auth.getBytes(StandardCharsets.UTF_8));
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/events"))
                 .header("Accept", "application/json")
-                .header("Authorization", basicAuth)
                 .GET()
                 .build();
 
@@ -76,17 +67,12 @@ public class EventApiClient {
      * @throws Exception Si ocurre un error en la comunicación o parseo
      */
     public EventDto createEvent(EventDto event) throws Exception {
-        String auth = ADMIN_USER + ":" + ADMIN_PASS;
-        String basicAuth = "Basic " + Base64.getEncoder()
-                .encodeToString(auth.getBytes(StandardCharsets.UTF_8));
-
         String json = objectMapper.writeValueAsString(event);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/events"))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .header("Authorization", basicAuth)
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 

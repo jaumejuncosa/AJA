@@ -1,4 +1,5 @@
 package com.aja.controller;
+import com.aja.model.LoginResponseDto;
 import com.aja.service.AuthService;
 
 import javafx.fxml.FXMLLoader;
@@ -19,7 +20,7 @@ import java.util.prefs.Preferences;
  * Proporciona validación de campos y manejo de errores de autenticación.
  */
 public class LoginController {
-private final AuthService authService = new AuthService();
+private final AuthService authService = AuthService.getInstance();
     private static final Preferences prefs = Preferences.userNodeForPackage(LoginController.class);
     private static final String PREF_USERNAME = "username";
     private static final String PREF_PASSWORD = "password";
@@ -96,10 +97,14 @@ private final AuthService authService = new AuthService();
     }
 
     // Autenticación usando el servicio
-    boolean ok = authService.authenticate(username, password);
+    LoginResponseDto authResponse = authService.authenticate(username, password);
 
-    if (!ok) {
-        showError("Credenciales inválidas", "Usuario o contraseña incorrectos.");
+    if (!authResponse.isSuccess()) {
+        // Mostrar mensaje de error del servidor
+        String errorMessage = authResponse.getMessage() != null ?
+            authResponse.getMessage().toString() :
+            "Credenciales inválidas";
+        showError("Error de autenticación", errorMessage);
         passwordField.clear();
         passwordField.requestFocus();
         return;

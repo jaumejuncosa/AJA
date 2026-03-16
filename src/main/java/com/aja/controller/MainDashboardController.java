@@ -8,6 +8,7 @@ import com.aja.model.UserDto;
 import com.aja.model.EventDto;
 import com.aja.model.MessageDto;
 import com.aja.model.ForumDto;
+import com.aja.service.AuthService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -19,6 +20,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -52,6 +54,11 @@ public class MainDashboardController {
     private Button btnLogout;
 
     @FXML
+    private Label lblUsername;
+    @FXML
+    private Label lblUserRole;
+
+    @FXML
     private Button newUserButton;
     @FXML
     private Button newForumButton;
@@ -78,7 +85,7 @@ public class MainDashboardController {
     @FXML
     private TableColumn<UserDto, String> colEmail;
     @FXML
-    private TableColumn<UserDto, Integer> colRole;
+    private TableColumn<UserDto, String> colRole;
     @FXML
     private TableColumn<UserDto, Boolean> colActive;
 
@@ -133,6 +140,8 @@ public class MainDashboardController {
     private final ForumApiClient forumApiClient = new ForumApiClient();
     private final ObservableList<ForumDto> foroPosts = FXCollections.observableArrayList();
 
+    private final AuthService authService = AuthService.getInstance();
+
     private List<Button> menuButtons;
     private List<VBox> contentPanes;
 
@@ -144,16 +153,39 @@ public class MainDashboardController {
      */
     @FXML
     public void initialize() {
+        // Mostrar información del usuario actual
+        UserDto currentUser = authService.getCurrentUser();
+        if (currentUser != null) {
+            lblUsername.setText(currentUser.getUsername());
+            lblUserRole.setText(currentUser.getRole());
+
+            // Mostrar u ocultar el botón "Usuarios" según el rol
+            boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+            btnUsuarios.setVisible(isAdmin);
+            btnUsuarios.setManaged(isAdmin);
+
+            // Si no es administrador, enfocar el botón Foro al iniciar
+            if (!isAdmin) {
+                btnForo.requestFocus();
+            }
+        }
+
         menuButtons = List.of(btnUsuarios, btnForo, btnEventos, btnMensajes);
         contentPanes = List.of(usuariosContent, foroContent, eventosContent, mensajesContent);
-        selectMenuItem(0); // Usuarios por defecto
+
+        // Seleccionar la pestaña predeterminada dependiendo del rol
+        if (currentUser != null && !"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+            selectMenuItem(1); // Foro
+        } else {
+            selectMenuItem(0); // Usuarios
+        }
 
         if (usuariosTable != null) {
             colUserId.setCellValueFactory(new PropertyValueFactory<>("id"));
             colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
             colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
             colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
-            colActive.setCellValueFactory(new PropertyValueFactory<>("isactive"));
+            colActive.setCellValueFactory(new PropertyValueFactory<>("isActive"));
 
             usuariosTable.setItems(usuarios);
             loadUsers();
@@ -247,6 +279,9 @@ public class MainDashboardController {
      */
     @FXML
     private void handleLogout() throws IOException {
+        // Hacer logout en el servicio de autenticación
+        authService.logout();
+
         Stage stage = (Stage) btnLogout.getScene().getWindow();
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/login.fxml"));
         Parent root = loader.load();
@@ -288,7 +323,7 @@ public class MainDashboardController {
                     user.getUsername(),
                     user.getEmail(),
                     user.getRole(),
-                    user.getIsactive()
+                    user.getIsActive()
             );
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -388,8 +423,9 @@ public class MainDashboardController {
         TextField emailField = new TextField();
         emailField.setPromptText("Email");
 
-        TextField roleField = new TextField();
-        roleField.setPromptText("Rol (número, ej: 1)");
+        ComboBox<String> roleComboBox = new ComboBox<>();
+        roleComboBox.getItems().addAll("USER", "ADMIN");
+        roleComboBox.setValue("USER"); // Valor por defecto
 
         CheckBox activeCheck = new CheckBox("Activo");
 
@@ -405,7 +441,7 @@ public class MainDashboardController {
             new Label("Nombre de usuario:"), usernameField,
             new Label("Contraseña:"), passwordField,
             new Label("Email:"), emailField,
-            new Label("Rol:"), roleField,
+            new Label("Rol:"), roleComboBox,
             activeCheck,
             buttons
         );
@@ -415,7 +451,7 @@ public class MainDashboardController {
                 String username = usernameField.getText().trim();
                 String password = passwordField.getText().trim();
                 String email = emailField.getText().trim();
-                int role = Integer.parseInt(roleField.getText().trim());
+                String role = roleComboBox.getValue();
                 boolean active = activeCheck.isSelected();
 
                 if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
@@ -427,7 +463,7 @@ public class MainDashboardController {
                 newUser.setUsername(username);
                 newUser.setEmail(email);
                 newUser.setRole(role);
-                newUser.setIsactive(active);
+                newUser.setIsActive(active);
 
                 userApiClient.createUser(newUser);
                 loadUsers(); // Refrescar tabla
@@ -439,8 +475,6 @@ public class MainDashboardController {
                 success.setContentText("El usuario ha sido creado exitosamente.");
                 success.showAndWait();
 
-            } catch (NumberFormatException ex) {
-                showError("Error", "El rol debe ser un número entero.");
             } catch (Exception ex) {
                 showError("Error", "No se pudo crear el usuario: " + ex.getMessage());
             }
