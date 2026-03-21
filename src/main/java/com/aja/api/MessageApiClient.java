@@ -85,4 +85,8 @@ public class MessageApiClient {
 
         return objectMapper.readValue(response.body(), MessageDto.class);
     }
+
+    public void setToken(String token) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

@@ -27,4 +27,8 @@ public class LoginResponseDto {
     public void setSuccess(boolean success) {
         this.success = success;
     }
+
+    public String getToken() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

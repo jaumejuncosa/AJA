@@ -16,8 +16,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -128,7 +126,7 @@ public class MainDashboardController {
     @FXML
     private TableColumn<ForumDto, String> colForumDate;
 
-    private final UserApiClient userApiClient = new UserApiClient();
+    private UserApiClient userApiClient = new UserApiClient();
     private final ObservableList<UserDto> usuarios = FXCollections.observableArrayList();
 
     private final EventApiClient eventApiClient = new EventApiClient();
@@ -144,6 +142,7 @@ public class MainDashboardController {
 
     private List<Button> menuButtons;
     private List<VBox> contentPanes;
+    private String token;
 
     /**
      * Método de inicialización llamado automáticamente por JavaFX.
@@ -185,10 +184,10 @@ public class MainDashboardController {
             colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
             colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
             colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
-            colActive.setCellValueFactory(new PropertyValueFactory<>("isActive"));
+            colActive.setCellValueFactory(new PropertyValueFactory<>("active"));
 
             usuariosTable.setItems(usuarios);
-            loadUsers();
+            //loadUsers();
 
             // Al hacer doble click sobre un usuario, solicitar detalle por ID.
             usuariosTable.setOnMouseClicked(event -> {
@@ -299,14 +298,22 @@ public class MainDashboardController {
      * Carga la lista de usuarios desde la API y actualiza la tabla correspondiente.
      * En caso de error en la comunicación con el servidor, imprime el error en consola.
      */
-    private void loadUsers() {
-        try {
-            List<UserDto> list = userApiClient.getAllUsers();
-            usuarios.setAll(list);
-        } catch (Exception e) {
-            e.printStackTrace();
+   private void loadUsers() {
+    try {
+        List<UserDto> list = userApiClient.getAllUsers();
+
+        System.out.println("Usuarios recibidos: " + list.size()); // 👈 DEBUG
+
+        for (UserDto u : list) {
+            System.out.println("Usuario: " + u.getUsername());
         }
+
+        usuarios.setAll(list);
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
+
 
     /**
      * Solicita al backend la información completa de un usuario por su ID.
@@ -323,7 +330,7 @@ public class MainDashboardController {
                     user.getUsername(),
                     user.getEmail(),
                     user.getRole(),
-                    user.getIsActive()
+                    user.getActive()
             );
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -733,4 +740,22 @@ public class MainDashboardController {
         alert.setContentText(message);
         alert.showAndWait();
     }
+    
+public void setToken(String token) {
+    this.token = token;
+
+    // pasar token a los clientes
+    userApiClient = new UserApiClient();
+    userApiClient.setToken(token);
+    //eventApiClient.setToken(token);
+    //messageApiClient.setToken(token);
+    //forumApiClient.setToken(token);
+    
+    // Cargar datos ahora que el token existe
+    loadUsers();
+    //loadEvents();
+    //loadMessages();
+    //loadForumPosts();
+}
+
 }

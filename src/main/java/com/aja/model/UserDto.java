@@ -89,7 +89,7 @@ public class UserDto {
      * Indica si el usuario está activo en el sistema.
      * @return true si el usuario está activo, false en caso contrario
      */
-    public Boolean getIsActive() {
+    public Boolean getActive() {
         return isActive;
     }
 

@@ -1,6 +1,7 @@
 package com.aja.api;
 
 import com.aja.AppConfig;
+import com.aja.model.ApiResponse;
 import com.aja.model.UserDto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +23,12 @@ public class UserApiClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private String token;
+
+    
+    public void setToken(String token) {
+    this.token = token;
+}
 
     /**
      * Constructor que inicializa el cliente HTTP y el mapper de JSON.
@@ -43,6 +50,7 @@ public class UserApiClient {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/user"))
                 .header("Accept", "application/json")
+                .header("Authorization", "Bearer " + token)
                 .GET()
                 .build();
 
@@ -53,10 +61,12 @@ public class UserApiClient {
             throw new RuntimeException("Error API /api/user: " + response.statusCode());
         }
 
-        return objectMapper.readValue(
-                response.body(),
-                new TypeReference<List<UserDto>>() {}
-        );
+        ApiResponse<List<UserDto>> responseObj =
+    objectMapper.readValue(response.body(),
+        new TypeReference<ApiResponse<List<UserDto>>>() {});
+
+return responseObj.getMessage();
+
     }
 
     /**
@@ -68,11 +78,11 @@ public class UserApiClient {
      * @throws Exception Si ocurre un error en la comunicación o parseo
      */
     public UserDto getUserById(Long id) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/api/user/" + id))
-                .header("Accept", "application/json")
-                .GET()
-                .build();
+       HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(BASE_URL + "/api/user/" + id)) 
+            .header("Authorization", "Bearer " + token)  
+            .GET()
+            .build();
 
         HttpResponse<String> response =
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());

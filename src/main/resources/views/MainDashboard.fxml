@@ -29,11 +29,11 @@
 
             <!-- Información del usuario -->
             <VBox spacing="4" styleClass="user-info">
-                <HBox spacing="6" alignment="CENTER_LEFT">
+                <HBox alignment="CENTER_LEFT" spacing="6">
                     <Label styleClass="user-label" text="Usuario:" />
                     <Label fx:id="lblUsername" styleClass="user-name" text="Usuario" />
                 </HBox>
-                <HBox spacing="6" alignment="CENTER_LEFT">
+                <HBox alignment="CENTER_LEFT" spacing="6">
                     <Label styleClass="user-label" text="ROL:" />
                     <Label fx:id="lblUserRole" styleClass="user-role" text="ROL" />
                 </HBox>
@@ -56,7 +56,7 @@
 
             <!-- Pie del panel -->
             <VBox spacing="8" styleClass="sidebar-footer">
-                <Button fx:id="btnLogout" text="  Cerrar sesión" styleClass="menu-button logout-button" onAction="#handleLogout" />
+                <Button fx:id="btnLogout" onAction="#handleLogout" styleClass="menu-button logout-button" text="  Cerrar sesión" />
                 <Label styleClass="sidebar-version" text="AJA Desktop v1.0" />
             </VBox>
         </VBox>
@@ -79,17 +79,17 @@
                         <Label styleClass="content-page-subtitle" text="Gestiona los usuarios registrados en la plataforma" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button fx:id="newUserButton" text="Nuevo usuario" styleClass="primary-action-button" onAction="#handleNewUser" />
+                    <Button fx:id="newUserButton" disable="true" onAction="#handleNewUser" styleClass="primary-action-button" text="Nuevo usuario" visible="false" />
                 </HBox>
 
                 <!-- Tabla de usuarios (rellenada desde /api/user) -->
                 <TableView fx:id="usuariosTable" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="colUserId" text="ID" prefWidth="80" />
-                        <TableColumn fx:id="colUsername" text="Nombre de usuario" prefWidth="220" />
-                        <TableColumn fx:id="colEmail" text="Email" prefWidth="260" />
-                        <TableColumn fx:id="colRole" text="Rol" prefWidth="120" />
-                        <TableColumn fx:id="colActive" text="Activo" prefWidth="120" />
+                        <TableColumn fx:id="colUserId" prefWidth="80" text="ID" />
+                        <TableColumn fx:id="colUsername" prefWidth="220" text="Nombre de usuario" />
+                        <TableColumn fx:id="colEmail" prefWidth="260" text="Email" />
+                        <TableColumn fx:id="colRole" prefWidth="120" text="Rol" />
+                        <TableColumn fx:id="colActive" prefWidth="120" text="Activo" />
                     </columns>
                 </TableView>
             </VBox>
@@ -107,16 +107,16 @@
                         <Label styleClass="content-page-subtitle" text="Participa y modera las conversaciones del foro" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button fx:id="newForumButton" text="Nuevo tema" styleClass="primary-action-button" onAction="#handleNewForum" />
+                    <Button fx:id="newForumButton" disable="true" onAction="#handleNewForum" styleClass="primary-action-button" text="Nuevo tema" visible="false" />
                 </HBox>
 
                 <!-- Tabla de foro -->
                 <TableView fx:id="foroTable" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="colForumId" text="ID" prefWidth="80" />
-                        <TableColumn fx:id="colForumTitle" text="Título" prefWidth="300" />
-                        <TableColumn fx:id="colForumAuthor" text="Autor" prefWidth="150" />
-                        <TableColumn fx:id="colForumDate" text="Fecha" prefWidth="150" />
+                        <TableColumn fx:id="colForumId" prefWidth="80" text="ID" />
+                        <TableColumn fx:id="colForumTitle" prefWidth="300" text="Título" />
+                        <TableColumn fx:id="colForumAuthor" prefWidth="150" text="Autor" />
+                        <TableColumn fx:id="colForumDate" prefWidth="150" text="Fecha" />
                     </columns>
                 </TableView>
             </VBox>
@@ -134,17 +134,17 @@
                         <Label styleClass="content-page-subtitle" text="Consulta y organiza los próximos eventos" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button fx:id="newEventButton" text="Nuevo evento" styleClass="primary-action-button" onAction="#handleNewEvent" />
+                    <Button fx:id="newEventButton" disable="true" onAction="#handleNewEvent" styleClass="primary-action-button" text="Nuevo evento" visible="false" />
                 </HBox>
 
                 <!-- Tabla de eventos -->
                 <TableView fx:id="eventosTable" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="colEventId" text="ID" prefWidth="80" />
-                        <TableColumn fx:id="colEventTitle" text="Título" prefWidth="200" />
-                        <TableColumn fx:id="colEventDescription" text="Descripción" prefWidth="300" />
-                        <TableColumn fx:id="colEventDate" text="Fecha" prefWidth="150" />
-                        <TableColumn fx:id="colEventLocation" text="Ubicación" prefWidth="200" />
+                        <TableColumn fx:id="colEventId" prefWidth="80" text="ID" />
+                        <TableColumn fx:id="colEventTitle" prefWidth="200" text="Título" />
+                        <TableColumn fx:id="colEventDescription" prefWidth="300" text="Descripción" />
+                        <TableColumn fx:id="colEventDate" prefWidth="150" text="Fecha" />
+                        <TableColumn fx:id="colEventLocation" prefWidth="200" text="Ubicación" />
                     </columns>
                 </TableView>
             </VBox>
@@ -162,18 +162,18 @@
                         <Label styleClass="content-page-subtitle" text="Consulta y responde los mensajes recibidos" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button fx:id="newMessageButton" text="Nuevo mensaje" styleClass="primary-action-button" onAction="#handleNewMessage" />
+                    <Button fx:id="newMessageButton" disable="true" onAction="#handleNewMessage" styleClass="primary-action-button" text="Nuevo mensaje" visible="false" />
                 </HBox>
 
                 <!-- Tabla de mensajes -->
                 <TableView fx:id="mensajesTable" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="colMessageId" text="ID" prefWidth="80" />
-                        <TableColumn fx:id="colMessageSender" text="Remitente" prefWidth="150" />
-                        <TableColumn fx:id="colMessageReceiver" text="Destinatario" prefWidth="150" />
-                        <TableColumn fx:id="colMessageContent" text="Contenido" prefWidth="300" />
-                        <TableColumn fx:id="colMessageDate" text="Fecha" prefWidth="150" />
-                        <TableColumn fx:id="colMessageRead" text="Leído" prefWidth="100" />
+                        <TableColumn fx:id="colMessageId" prefWidth="80" text="ID" />
+                        <TableColumn fx:id="colMessageSender" prefWidth="150" text="Remitente" />
+                        <TableColumn fx:id="colMessageReceiver" prefWidth="150" text="Destinatario" />
+                        <TableColumn fx:id="colMessageContent" prefWidth="300" text="Contenido" />
+                        <TableColumn fx:id="colMessageDate" prefWidth="150" text="Fecha" />
+                        <TableColumn fx:id="colMessageRead" prefWidth="100" text="Leído" />
                     </columns>
                 </TableView>
             </VBox>

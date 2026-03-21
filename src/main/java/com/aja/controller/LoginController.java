@@ -109,6 +109,12 @@ private final AuthService authService = AuthService.getInstance();
         passwordField.requestFocus();
         return;
     }
+    String token = authResponse.getToken();
+    try {
+        navigateToDashboard(token);
+    } catch (IOException e) {
+        showError("Error", "No se pudo cargar el panel principal: " + e.getMessage());
+    }
 
     // Guardar o borrar credenciales según el checkbox
     if (rememberCheckBox.isSelected()) {
@@ -121,7 +127,7 @@ private final AuthService authService = AuthService.getInstance();
 
     // Si todo es correcto, navegar al dashboard
     try {
-        navigateToDashboard();
+        navigateToDashboard(token);
     } catch (IOException e) {
         showError("Error", "No se pudo cargar el panel principal: " + e.getMessage());
     }
@@ -133,11 +139,14 @@ private final AuthService authService = AuthService.getInstance();
      *
      * @throws IOException Si ocurre un error al cargar el archivo FXML
      */
-    private void navigateToDashboard() throws IOException {
+    private void navigateToDashboard(String token) throws IOException {
         Stage stage = (Stage) loginButton.getScene().getWindow();
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/MainDashboard.fxml"));
         Parent root = loader.load();
 
+        MainDashboardController controller = loader.getController();
+        controller.setToken(token);
+        
         Scene scene = new Scene(root, 1200, 720);
         scene.getStylesheets().add(getClass().getResource("/styles/dashboard.css").toExternalForm());
 
