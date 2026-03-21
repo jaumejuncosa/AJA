@@ -32,6 +32,7 @@ public class AuthService {
     private final HttpClient httpClient = HttpClientProvider.getClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private UserDto currentUser;
+    private String token;
 
     private AuthService() {
     }
@@ -108,5 +109,9 @@ public class AuthService {
         currentUser = null;
         // Las cookies se limpiarán automáticamente cuando se cierre la aplicación
         // o se puede implementar una llamada al servidor para invalidar la sesión
+    }
+
+    public String getToken() {
+        return this.token;
     }
 }

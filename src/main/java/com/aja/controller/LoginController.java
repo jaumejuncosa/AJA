@@ -79,7 +79,9 @@ private final AuthService authService = AuthService.getInstance();
      * al panel principal si la autenticación es exitosa.
      */
     @FXML
-    private void handleLogin() {
+   private void handleLogin() {
+    loginButton.setDisable(true); // Desactivamos al hacer clic
+    
     String username = usernameField.getText();
     String password = passwordField.getText();
 
@@ -87,12 +89,14 @@ private final AuthService authService = AuthService.getInstance();
     if (username == null || username.isBlank()) {
         showError("Campo requerido", "Por favor, introduce tu usuario.");
         usernameField.requestFocus();
+        loginButton.setDisable(false); // Reactivamos el botón
         return;
     }
 
     if (password == null || password.isBlank()) {
         showError("Campo requerido", "Por favor, introduce tu contraseña.");
         passwordField.requestFocus();
+        loginButton.setDisable(false); // Reactivamos el botón
         return;
     }
 
@@ -107,14 +111,11 @@ private final AuthService authService = AuthService.getInstance();
         showError("Error de autenticación", errorMessage);
         passwordField.clear();
         passwordField.requestFocus();
+        loginButton.setDisable(false); // Reactivamos el botón
         return;
     }
+    
     String token = authResponse.getToken();
-    try {
-        navigateToDashboard(token);
-    } catch (IOException e) {
-        showError("Error", "No se pudo cargar el panel principal: " + e.getMessage());
-    }
 
     // Guardar o borrar credenciales según el checkbox
     if (rememberCheckBox.isSelected()) {
@@ -125,12 +126,8 @@ private final AuthService authService = AuthService.getInstance();
         prefs.remove(PREF_PASSWORD);
     }
 
-    // Si todo es correcto, navegar al dashboard
-    try {
-        navigateToDashboard(token);
-    } catch (IOException e) {
-        showError("Error", "No se pudo cargar el panel principal: " + e.getMessage());
-    }
+    // Si todo es correcto, navegar al dashboard (¡UNA SOLA VEZ!)
+    navigateToDashboard(token);
 }
 
     /**
@@ -139,23 +136,46 @@ private final AuthService authService = AuthService.getInstance();
      *
      * @throws IOException Si ocurre un error al cargar el archivo FXML
      */
-    private void navigateToDashboard(String token) throws IOException {
-        Stage stage = (Stage) loginButton.getScene().getWindow();
+    private void navigateToDashboard(String token) {
+    try {
+        // 1. Cargamos el archivo FXML del Dashboard y obtenemos el root
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/MainDashboard.fxml"));
         Parent root = loader.load();
 
-        MainDashboardController controller = loader.getController();
-        controller.setToken(token);
-        
+        // 2. Obtener el controller y pasar el token
+        MainDashboardController dashboardController = loader.getController();
+        dashboardController.setToken(authService.getToken()); // Asegúrate de que AuthService tenga el token
+
+        // 3. Crear la escena con la vista cargada y añadir los estilos
         Scene scene = new Scene(root, 1200, 720);
         scene.getStylesheets().add(getClass().getResource("/styles/dashboard.css").toExternalForm());
 
+        // 4. AHORA SÍ: Obtenemos la ventana actual y le aplicamos todo
+        Stage stage = (Stage) loginButton.getScene().getWindow();
+        if (stage == null) {
+    System.out.println("Aviso: Se intentó cargar el Dashboard por segunda vez. Bloqueado.");
+    return; // Cortamos la ejecución aquí para evitar el NullPointerException
+}
         stage.setTitle("AJA - Panel de control");
         stage.setScene(scene);
         stage.setResizable(true);
         stage.setMaximized(true);
         stage.centerOnScreen();
+
+        // 5. Y finalmente, mostramos la ventana actualizada
+        stage.show();
+
+        System.out.println("Dashboard cargado correctamente");
+
+    } catch (IOException e) {
+        e.printStackTrace();
+        showError("Error", "No se pudo cargar el panel principal: " + e.getMessage());
+    } catch (Exception e) {
+        e.printStackTrace();
+        showError("Error inesperado", "Ocurrió un error al inicializar el Dashboard: " + e.getMessage());
     }
+}
+
 
     /**
      * Maneja la acción del enlace "Olvidé mi contraseña".

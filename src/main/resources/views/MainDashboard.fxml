@@ -37,6 +37,10 @@
                     <Label styleClass="user-label" text="ROL:" />
                     <Label fx:id="lblUserRole" styleClass="user-role" text="ROL" />
                 </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="6">
+                    <Label styleClass="user-label" text="Email:" />
+                    <Label fx:id="lblUserEmail" styleClass="user-email" text="email@dominio.com" />
+                </HBox>
             </VBox>
 
             <!-- Separador -->

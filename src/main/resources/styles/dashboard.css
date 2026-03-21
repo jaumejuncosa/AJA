@@ -57,6 +57,20 @@
     -fx-border-width: 1;
 }
 
+.user-email {
+    /* Color del texto (un gris claro/azulado que suele leerse muy bien) */
+    -fx-text-fill: #f8fafc; 
+    
+    /* Tamaño de la letra un pelín más pequeño que el nombre */
+    -fx-font-size: 13px; 
+    
+    /* Quitar negritas si las tuviera heredadas */
+    -fx-font-weight: normal; 
+    
+    /* Un poco de opacidad por si quieres que sea más sutil que el nombre (opcional) */
+    -fx-opacity: 0.9;
+}
+
 .sidebar-divider {
     -fx-padding: 16 0;
 }

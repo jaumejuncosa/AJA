@@ -28,6 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.application.Platform; 
 
 import java.io.IOException;
 import java.util.List;
@@ -55,6 +56,8 @@ public class MainDashboardController {
     private Label lblUsername;
     @FXML
     private Label lblUserRole;
+    @FXML
+    private Label lblUserEmail;
 
     @FXML
     private Button newUserButton;
@@ -152,11 +155,14 @@ public class MainDashboardController {
      */
     @FXML
     public void initialize() {
+         System.out.println("Inicializando Dashboard...");
+         
         // Mostrar información del usuario actual
         UserDto currentUser = authService.getCurrentUser();
         if (currentUser != null) {
             lblUsername.setText(currentUser.getUsername());
             lblUserRole.setText(currentUser.getRole());
+            lblUserEmail.setText(currentUser.getEmail());
 
             // Mostrar u ocultar el botón "Usuarios" según el rol
             boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
@@ -178,7 +184,7 @@ public class MainDashboardController {
         } else {
             selectMenuItem(0); // Usuarios
         }
-
+        
         if (usuariosTable != null) {
             colUserId.setCellValueFactory(new PropertyValueFactory<>("id"));
             colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
@@ -208,7 +214,7 @@ public class MainDashboardController {
             colEventLocation.setCellValueFactory(new PropertyValueFactory<>("location"));
 
             eventosTable.setItems(eventos);
-            loadEvents();
+            //loadEvents();
         }
 
         if (mensajesTable != null) {
@@ -220,7 +226,7 @@ public class MainDashboardController {
             colMessageRead.setCellValueFactory(new PropertyValueFactory<>("read"));
 
             mensajesTable.setItems(mensajes);
-            loadMessages();
+            //loadMessages();
         }
 
         if (foroTable != null) {
@@ -230,7 +236,7 @@ public class MainDashboardController {
             colForumDate.setCellValueFactory(new PropertyValueFactory<>("date"));
 
             foroTable.setItems(foroPosts);
-            loadForumPosts();
+            //loadForumPosts();
         }
     }
 
@@ -298,18 +304,23 @@ public class MainDashboardController {
      * Carga la lista de usuarios desde la API y actualiza la tabla correspondiente.
      * En caso de error en la comunicación con el servidor, imprime el error en consola.
      */
-   private void loadUsers() {
+  // ...
+
+private void loadUsers() {
     try {
         List<UserDto> list = userApiClient.getAllUsers();
 
-        System.out.println("Usuarios recibidos: " + list.size()); // 👈 DEBUG
+        System.out.println("Usuarios recibidos: " + list.size()); // Para tu comprobación en consola
 
-        for (UserDto u : list) {
-            System.out.println("Usuario: " + u.getUsername());
-        }
-
-        usuarios.setAll(list);
+        // Platform.runLater le dice a JavaFX: "Oye, actualiza la interfaz gráfica de forma segura"
+        Platform.runLater(() -> {
+            usuarios.clear(); // Limpiamos por si acaso
+            usuarios.setAll(list);
+            usuariosTable.refresh(); // Forzamos a la tabla a repintarse
+        });
+        
     } catch (Exception e) {
+        System.err.println("Error al cargar la lista de usuarios:");
         e.printStackTrace();
     }
 }
@@ -745,11 +756,10 @@ public void setToken(String token) {
     this.token = token;
 
     // pasar token a los clientes
-    userApiClient = new UserApiClient();
     userApiClient.setToken(token);
-    //eventApiClient.setToken(token);
-    //messageApiClient.setToken(token);
-    //forumApiClient.setToken(token);
+    eventApiClient.setToken(token);
+    messageApiClient.setToken(token);
+    forumApiClient.setToken(token);
     
     // Cargar datos ahora que el token existe
     loadUsers();

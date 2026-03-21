@@ -22,6 +22,7 @@ public class MessageApiClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private String token;
 
     /**
      * Constructor que inicializa el cliente HTTP y el mapper de JSON.
@@ -87,6 +88,6 @@ public class MessageApiClient {
     }
 
     public void setToken(String token) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        this.token = token;
     }
 }

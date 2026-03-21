@@ -8,6 +8,7 @@ public class LoginResponseDto {
 
     private Object message; // Puede ser String (error) o UserDto (éxito)
     private boolean success;
+    private String token;
 
     public LoginResponseDto() {
     }
@@ -29,6 +30,10 @@ public class LoginResponseDto {
     }
 
     public String getToken() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return this.token;
+    }
+    
+    public void setToken(String token) {
+        this.token = token;
     }
 }
