@@ -60,7 +60,7 @@
 
             <!-- Pie del panel -->
             <VBox spacing="8" styleClass="sidebar-footer">
-                <Button fx:id="btnLogout" onAction="#handleLogout" styleClass="menu-button logout-button" text="  Cerrar sesión" />
+                <Button fx:id="btnLogout" onAction="#handleLogout" styleClass="menu-button logout-button" text="Cerrar sesión" />
                 <Label styleClass="sidebar-version" text="AJA Desktop v1.0" />
             </VBox>
         </VBox>

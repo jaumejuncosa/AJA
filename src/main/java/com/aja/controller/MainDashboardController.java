@@ -32,6 +32,8 @@ import javafx.application.Platform;
 
 import java.io.IOException;
 import java.util.List;
+import javafx.event.ActionEvent;
+import javafx.scene.Node;
 
 /**
  * Controlador del panel principal (dashboard) de la aplicación AJA Desktop.
@@ -282,23 +284,57 @@ public class MainDashboardController {
      *
      * @throws IOException Si ocurre un error al cargar la vista de login
      */
-    @FXML
-    private void handleLogout() throws IOException {
-        // Hacer logout en el servicio de autenticación
-        authService.logout();
+   @FXML
+    private void handleLogout(ActionEvent event) {
+    try {
+        System.out.println("Ejecutando logout seguro...");
+        com.aja.service.AuthService.getInstance().logout();
 
-        Stage stage = (Stage) btnLogout.getScene().getWindow();
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/login.fxml"));
+        // 1. Cargar el FXML (Ruta que ya sabemos que funciona)
+        java.net.URL loginUrl = getClass().getClassLoader().getResource("login.fxml");
+        if (loginUrl == null) loginUrl = getClass().getClassLoader().getResource("views/login.fxml");
+
+        FXMLLoader loader = new FXMLLoader(loginUrl);
         Parent root = loader.load();
+        
+        // 2. Preparar la escena
+        Scene scene = new Scene(root);
+        
+        // 3. INTENTO DE CSS (Ruta corregida a login.css)
+        try {
+            // Probamos en la carpeta /styles/ si ahí es donde lo tienes según tu imagen
+            java.net.URL cssUrl = getClass().getResource("/styles/login.css");
+            
+            if (cssUrl != null) {
+                scene.getStylesheets().add(cssUrl.toExternalForm());
+                System.out.println("CSS 'login.css' aplicado correctamente.");
+            } else {
+                System.err.println("Advertencia: No se encontró /styles/login.css. Comprueba si está en la raíz.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al aplicar estilos: " + e.getMessage());
+        }
 
-        Scene scene = new Scene(root, 420, 380);
-        scene.getStylesheets().add(getClass().getResource("/styles/login.css").toExternalForm());
-
-        stage.setTitle("AJA - Iniciar sesión");
+        // 4. Cambiar la ventana
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        
+        stage.setMaximized(false); // Quitar el maximizado
         stage.setScene(scene);
-        stage.setResizable(false);
+        
+        // Ajustamos el tamaño a lo que suele medir un login (ejemplo 450x600)
+        stage.setWidth(450); 
+        stage.setHeight(600);
+        
         stage.centerOnScreen();
+        stage.show();
+        
+        System.out.println("¡Cambio de pantalla completado!");
+
+    } catch (Exception e) {
+        System.err.println("ERROR CRÍTICO: El cambio de pantalla ha fallado completamente.");
+        e.printStackTrace();
     }
+}
 
     /**
      * Carga la lista de usuarios desde la API y actualiza la tabla correspondiente.
