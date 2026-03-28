@@ -25,10 +25,14 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.application.Platform; 
+import javafx.application.Platform;
+import javafx.geometry.Pos;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.io.IOException;
 import java.util.List;
@@ -53,6 +57,9 @@ public class MainDashboardController {
     private Button btnMensajes;
     @FXML
     private Button btnLogout;
+
+    @FXML
+    private StackPane contentArea;
 
     @FXML
     private Label lblUsername;
@@ -146,7 +153,6 @@ public class MainDashboardController {
     private final AuthService authService = AuthService.getInstance();
 
     private List<Button> menuButtons;
-    private List<VBox> contentPanes;
     private String token;
 
     /**
@@ -178,14 +184,9 @@ public class MainDashboardController {
         }
 
         menuButtons = List.of(btnUsuarios, btnForo, btnEventos, btnMensajes);
-        contentPanes = List.of(usuariosContent, foroContent, eventosContent, mensajesContent);
 
-        // Seleccionar la pestaña predeterminada dependiendo del rol
-        if (currentUser != null && !"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
-            selectMenuItem(1); // Foro
-        } else {
-            selectMenuItem(0); // Usuarios
-        }
+        // En lugar de cargar una pestaña por defecto, mostramos la bienvenida
+        showWelcomeView();
         
         if (usuariosTable != null) {
             colUserId.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -195,7 +196,6 @@ public class MainDashboardController {
             colActive.setCellValueFactory(new PropertyValueFactory<>("active"));
 
             usuariosTable.setItems(usuarios);
-            //loadUsers();
 
             // Al hacer doble click sobre un usuario, solicitar detalle por ID.
             usuariosTable.setOnMouseClicked(event -> {
@@ -243,39 +243,111 @@ public class MainDashboardController {
     }
 
     /**
+     * Muestra una pantalla de bienvenida en el área de contenido principal.
+     */
+    private void showWelcomeView() {
+        contentArea.getChildren().clear();
+
+        VBox welcomeBox = new VBox(20); // Aumentamos el espacio entre elementos
+        welcomeBox.getStyleClass().add("welcome-container");
+        welcomeBox.setAlignment(Pos.CENTER);
+
+        // Cargar el logo desde los recursos
+        ImageView logoView = new ImageView();
+        try {
+            java.net.URL logoUrl = getClass().getResource("/images/logo.png");
+            if (logoUrl != null) {
+                Image logo = new Image(logoUrl.toExternalForm());
+                logoView.setImage(logo);
+                logoView.setFitWidth(150); // Tamaño sugerido para el logo
+                logoView.setPreserveRatio(true);
+                logoView.getStyleClass().add("welcome-logo");
+            }
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar el logo: " + e.getMessage());
+        }
+
+        Label title = new Label("¡Bienvenido al Panel de Control!");
+        title.getStyleClass().add("welcome-title");
+
+        Label subtitle = new Label("Por favor, selecciona una opción en el menú lateral para empezar a gestionar el sistema.");
+        subtitle.getStyleClass().add("welcome-subtitle");
+
+        welcomeBox.getChildren().addAll(logoView, title, subtitle);
+        contentArea.getChildren().add(welcomeBox);
+    }
+
+    /**
+     * Método genérico para cargar vistas FXML en el área de contenido.
+     * Ajusta la vista para que ocupe todo el espacio disponible.
+     */
+    private <T> T loadView(String fxmlPath) {
+        try {
+            contentArea.getChildren().clear();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent view = loader.load();
+            
+            // Asegurar que la vista se expanda en el StackPane
+            if (view instanceof javafx.scene.layout.Region) {
+                ((javafx.scene.layout.Region) view).prefWidthProperty().bind(contentArea.widthProperty());
+                ((javafx.scene.layout.Region) view).prefHeightProperty().bind(contentArea.heightProperty());
+            }
+
+            contentArea.getChildren().add(view);
+            return loader.getController();
+        } catch (IOException e) {
+            showError("Error de carga", "No se pudo cargar la vista: " + fxmlPath);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * Muestra la sección de usuarios en el panel principal.
-     * Cambia la selección del menú de navegación a la pestaña de usuarios.
      */
     @FXML
     private void showUsuarios() {
         selectMenuItem(0);
+        usuariosContent.setVisible(true);
+        usuariosContent.setManaged(true);
+        contentArea.getChildren().setAll(usuariosContent);
+        loadUsers();
     }
 
     /**
      * Muestra la sección del foro en el panel principal.
-     * Cambia la selección del menú de navegación a la pestaña del foro.
      */
     @FXML
     private void showForo() {
         selectMenuItem(1);
+        foroContent.setVisible(true);
+        foroContent.setManaged(true);
+        contentArea.getChildren().setAll(foroContent);
+        loadForumPosts();
     }
 
     /**
      * Muestra la sección de eventos en el panel principal.
-     * Cambia la selección del menú de navegación a la pestaña de eventos.
      */
     @FXML
     private void showEventos() {
         selectMenuItem(2);
+        eventosContent.setVisible(true);
+        eventosContent.setManaged(true);
+        contentArea.getChildren().setAll(eventosContent);
+        loadEvents();
     }
 
     /**
      * Muestra la sección de mensajes en el panel principal.
-     * Cambia la selección del menú de navegación a la pestaña de mensajes.
      */
     @FXML
     private void showMensajes() {
         selectMenuItem(3);
+        mensajesContent.setVisible(true);
+        mensajesContent.setManaged(true);
+        contentArea.getChildren().setAll(mensajesContent);
+        loadMessages();
     }
 
     /**
@@ -346,14 +418,15 @@ private void loadUsers() {
     try {
         List<UserDto> list = userApiClient.getAllUsers();
 
-        System.out.println("Usuarios recibidos: " + list.size()); // Para tu comprobación en consola
+        if (list != null) {
+            System.out.println("Usuarios recibidos: " + list.size());
 
-        // Platform.runLater le dice a JavaFX: "Oye, actualiza la interfaz gráfica de forma segura"
-        Platform.runLater(() -> {
-            usuarios.clear(); // Limpiamos por si acaso
-            usuarios.setAll(list);
-            usuariosTable.refresh(); // Forzamos a la tabla a repintarse
-        });
+            Platform.runLater(() -> {
+                usuarios.clear();
+                usuarios.setAll(list);
+                usuariosTable.refresh();
+            });
+        }
         
     } catch (Exception e) {
         System.err.println("Error al cargar la lista de usuarios:");
@@ -436,22 +509,18 @@ private void loadUsers() {
 
     /**
      * Selecciona y muestra el panel de contenido correspondiente al índice especificado.
-     * Actualiza el estilo de los botones de navegación para resaltar el seleccionado
-     * y controla la visibilidad de los paneles de contenido.
+     * Actualiza el estilo de los botones de navegación para resaltar el seleccionado.
      *
      * @param index El índice del elemento del menú a seleccionar (0-3)
      */
     private void selectMenuItem(int index) {
         for (int i = 0; i < menuButtons.size(); i++) {
             Button btn = menuButtons.get(i);
-            VBox content = contentPanes.get(i);
             boolean selected = (i == index);
             btn.getStyleClass().removeAll("menu-button-selected");
             if (selected) {
                 btn.getStyleClass().add("menu-button-selected");
             }
-            content.setVisible(selected);
-            content.setManaged(selected);
         }
     }
 

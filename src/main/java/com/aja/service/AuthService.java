@@ -11,7 +11,7 @@ import java.util.HashMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.aja.model.LoginResponseDto;
 import com.aja.model.UserDto;
-import com.aja.AppConfig;
+import com.aja.config.AppConfig;
 import com.aja.api.HttpClientProvider;
 
 /**
@@ -75,6 +75,8 @@ public class AuthService {
 
             // Si el login fue exitoso, almacenar la información del usuario
             if (loginResponse.isSuccess() && loginResponse.getMessage() instanceof java.util.Map) {
+                this.token = loginResponse.getToken();
+                
                 // Convertir el Map a UserDto
                 @SuppressWarnings("unchecked")
                 java.util.Map<String, Object> userMap = (java.util.Map<String, Object>) loginResponse.getMessage();

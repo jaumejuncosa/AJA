@@ -175,3 +175,46 @@
     -fx-font-size: 13px;
     -fx-text-fill: #94a3b8;
 }
+
+/* ----- Pantalla de Bienvenida ----- */
+.welcome-container {
+    -fx-alignment: CENTER;
+    -fx-background-color: #f8fafc;
+    -fx-padding: 40;
+}
+
+.welcome-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1e293b;
+}
+
+.welcome-subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: #64748b;
+    -fx-text-alignment: CENTER;
+}
+
+/* ----- Pantalla de Bienvenida ----- */
+.welcome-container {
+    -fx-alignment: CENTER;
+    -fx-background-color: #f8fafc;
+    -fx-padding: 40;
+}
+
+.welcome-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1e293b;
+}
+
+.welcome-subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: #64748b;
+    -fx-text-alignment: CENTER;
+}
+
+.welcome-logo {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 0, 4);
+    -fx-opacity: 0.9;
+}

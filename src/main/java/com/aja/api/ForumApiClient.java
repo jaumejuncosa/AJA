@@ -1,6 +1,7 @@
 package com.aja.api;
 
 import com.aja.config.AppConfig;
+import com.aja.model.ApiResponse;
 import com.aja.model.ForumDto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,11 +42,16 @@ public class ForumApiClient {
      *                   o en el procesamiento de la respuesta JSON
      */
     public List<ForumDto> getAllForumPosts() throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/forum"))
                 .header("Accept", "application/json")
-                .GET()
-                .build();
+                .GET();
+
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "Bearer " + token);
+        }
+
+        HttpRequest request = requestBuilder.build();
 
         HttpResponse<String> response =
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -54,10 +60,10 @@ public class ForumApiClient {
             throw new RuntimeException("Error API /api/forum: " + response.statusCode());
         }
 
-        return objectMapper.readValue(
-                response.body(),
-                new TypeReference<List<ForumDto>>() {}
-        );
+        ApiResponse<List<ForumDto>> responseObj = objectMapper.readValue(
+                response.body(), 
+                new TypeReference<ApiResponse<List<ForumDto>>>() {});
+        return responseObj.getMessage();
     }
 
     /**
@@ -70,21 +76,27 @@ public class ForumApiClient {
     public ForumDto createForumPost(ForumDto forumPost) throws Exception {
         String json = objectMapper.writeValueAsString(forumPost);
 
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/forum"))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(json));
+
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "Bearer " + token);
+        }
 
         HttpResponse<String> response =
-                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 201 && response.statusCode() != 200) {
             throw new RuntimeException("Error creando post en foro: " + response.statusCode() + " - " + response.body());
         }
 
-        return objectMapper.readValue(response.body(), ForumDto.class);
+        ApiResponse<ForumDto> responseObj = objectMapper.readValue(
+                response.body(), 
+                new TypeReference<ApiResponse<ForumDto>>() {});
+        return responseObj.getMessage();
     }
 
     public void setToken(String token) {

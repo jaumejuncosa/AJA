@@ -1,6 +1,7 @@
 package com.aja.api;
 
 import com.aja.config.AppConfig;
+import com.aja.model.ApiResponse;
 import com.aja.model.EventDto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,11 +42,16 @@ public class EventApiClient {
      *                   o en el procesamiento de la respuesta JSON
      */
     public List<EventDto> getAllEvents() throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/events"))
                 .header("Accept", "application/json")
-                .GET()
-                .build();
+                .GET();
+
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "Bearer " + token);
+        }
+
+        HttpRequest request = requestBuilder.build();
 
         HttpResponse<String> response =
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -54,10 +60,10 @@ public class EventApiClient {
             throw new RuntimeException("Error API /api/events: " + response.statusCode());
         }
 
-        return objectMapper.readValue(
-                response.body(),
-                new TypeReference<List<EventDto>>() {}
-        );
+        ApiResponse<List<EventDto>> responseObj = objectMapper.readValue(
+                response.body(), 
+                new TypeReference<ApiResponse<List<EventDto>>>() {});
+        return responseObj.getMessage();
     }
 
     /**
@@ -70,21 +76,27 @@ public class EventApiClient {
     public EventDto createEvent(EventDto event) throws Exception {
         String json = objectMapper.writeValueAsString(event);
 
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/events"))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(json));
+
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "Bearer " + token);
+        }
 
         HttpResponse<String> response =
-                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 201 && response.statusCode() != 200) {
             throw new RuntimeException("Error creando evento: " + response.statusCode() + " - " + response.body());
         }
 
-        return objectMapper.readValue(response.body(), EventDto.class);
+        ApiResponse<EventDto> responseObj = objectMapper.readValue(
+                response.body(), 
+                new TypeReference<ApiResponse<EventDto>>() {});
+        return responseObj.getMessage();
     }
 
     public void setToken(String token) {

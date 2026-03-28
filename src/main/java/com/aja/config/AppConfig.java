@@ -26,8 +26,11 @@ public final class AppConfig {
         try (InputStream in = AppConfig.class.getResourceAsStream(CONFIG_FILE)) {
             if (in != null) {
                 props.load(in);
+            } else {
+                System.err.println("Archivo de configuración no encontrado: " + CONFIG_FILE);
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("Error cargando configuración: " + e.getMessage());
             // Si no se puede leer la configuración, se usa el valor por defecto.
         }
         return props;

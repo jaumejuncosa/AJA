@@ -1,6 +1,6 @@
 package com.aja.api;
 
-import com.aja.AppConfig;
+import com.aja.config.AppConfig;
 import com.aja.model.ApiResponse;
 import com.aja.model.UserDto;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -47,12 +47,16 @@ public class UserApiClient {
      *                   o en el procesamiento de la respuesta JSON
      */
     public List<UserDto> getAllUsers() throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/user"))
                 .header("Accept", "application/json")
-                .header("Authorization", "Bearer " + token)
-                .GET()
-                .build();
+                .GET();
+
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "Bearer " + token);
+        }
+
+        HttpRequest request = requestBuilder.build();
 
         HttpResponse<String> response =
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -61,12 +65,10 @@ public class UserApiClient {
             throw new RuntimeException("Error API /api/user: " + response.statusCode());
         }
 
-        ApiResponse<List<UserDto>> responseObj =
-    objectMapper.readValue(response.body(),
-        new TypeReference<ApiResponse<List<UserDto>>>() {});
-
-return responseObj.getMessage();
-
+        ApiResponse<List<UserDto>> responseObj = objectMapper.readValue(
+                response.body(), 
+                new TypeReference<ApiResponse<List<UserDto>>>() {});
+        return responseObj.getMessage();
     }
 
     /**
@@ -78,20 +80,26 @@ return responseObj.getMessage();
      * @throws Exception Si ocurre un error en la comunicación o parseo
      */
     public UserDto getUserById(Long id) throws Exception {
-       HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(BASE_URL + "/api/user/" + id)) 
-            .header("Authorization", "Bearer " + token)  
-            .GET()
-            .build();
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/api/user/" + id))
+                .header("Accept", "application/json")
+                .GET();
+
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "Bearer " + token);
+        }
 
         HttpResponse<String> response =
-                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             throw new RuntimeException("Error API /api/user/" + id + ": " + response.statusCode());
         }
 
-        return objectMapper.readValue(response.body(), UserDto.class);
+        ApiResponse<UserDto> responseObj = objectMapper.readValue(
+                response.body(), 
+                new TypeReference<ApiResponse<UserDto>>() {});
+        return responseObj.getMessage();
     }
 
     /**
@@ -104,21 +112,26 @@ return responseObj.getMessage();
     public UserDto createUser(UserDto user) throws Exception {
         String json = objectMapper.writeValueAsString(user);
 
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/api/user"))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(json));
+
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "Bearer " + token);
+        }
 
         HttpResponse<String> response =
-                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 201 && response.statusCode() != 200) {
             throw new RuntimeException("Error creando usuario: " + response.statusCode() + " - " + response.body());
         }
 
-        return objectMapper.readValue(response.body(), UserDto.class);
+        ApiResponse<UserDto> responseObj = objectMapper.readValue(
+                response.body(), 
+                new TypeReference<ApiResponse<UserDto>>() {});
+        return responseObj.getMessage();
     }
 }
-
