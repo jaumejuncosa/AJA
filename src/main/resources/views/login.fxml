@@ -27,11 +27,13 @@
         <VBox spacing="5">
             <Label styleClass="field-label" text="Usuario" />
             <TextField fx:id="usernameField" maxWidth="Infinity" promptText="Introduce tu usuario" styleClass="input-field" />
+            <Label fx:id="usernameErrorLabel" managed="false" styleClass="error-label" visible="false" />
         </VBox>
 
         <VBox spacing="5">
             <Label styleClass="field-label" text="Contraseña" />
             <PasswordField fx:id="passwordField" maxWidth="Infinity" promptText="Introduce tu contraseña" styleClass="input-field" />
+            <Label fx:id="passwordErrorLabel" managed="false" styleClass="error-label" visible="false" />
         </VBox>
 
         <HBox alignment="CENTER_LEFT" spacing="10">

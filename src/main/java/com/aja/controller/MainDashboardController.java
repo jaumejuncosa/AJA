@@ -11,6 +11,7 @@ import com.aja.model.ForumDto;
 import com.aja.service.AuthService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -19,6 +20,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -69,6 +72,9 @@ public class MainDashboardController {
     private Label lblUserEmail;
 
     @FXML
+    private TextField searchUserField;
+
+    @FXML
     private Button newUserButton;
     @FXML
     private Button newForumButton;
@@ -99,18 +105,9 @@ public class MainDashboardController {
     @FXML
     private TableColumn<UserDto, Boolean> colActive;
 
+    /* Cambiamos TableView por ListView para la línea de tiempo */
     @FXML
-    private TableView<EventDto> eventosTable;
-    @FXML
-    private TableColumn<EventDto, Long> colEventId;
-    @FXML
-    private TableColumn<EventDto, String> colEventTitle;
-    @FXML
-    private TableColumn<EventDto, String> colEventDescription;
-    @FXML
-    private TableColumn<EventDto, String> colEventDate;
-    @FXML
-    private TableColumn<EventDto, String> colEventLocation;
+    private ListView<EventDto> eventListView;
 
     @FXML
     private TableView<MessageDto> mensajesTable;
@@ -127,19 +124,13 @@ public class MainDashboardController {
     @FXML
     private TableColumn<MessageDto, Boolean> colMessageRead;
 
+    /* Cambiamos TableView por ListView para un estilo de foro real */
     @FXML
-    private TableView<ForumDto> foroTable;
-    @FXML
-    private TableColumn<ForumDto, Long> colForumId;
-    @FXML
-    private TableColumn<ForumDto, String> colForumTitle;
-    @FXML
-    private TableColumn<ForumDto, String> colForumAuthor;
-    @FXML
-    private TableColumn<ForumDto, String> colForumDate;
+    private ListView<ForumDto> forumListView;
 
-    private UserApiClient userApiClient = new UserApiClient();
+    private final UserApiClient userApiClient = new UserApiClient();
     private final ObservableList<UserDto> usuarios = FXCollections.observableArrayList();
+    private final FilteredList<UserDto> filteredUsuarios = new FilteredList<>(usuarios);
 
     private final EventApiClient eventApiClient = new EventApiClient();
     private final ObservableList<EventDto> eventos = FXCollections.observableArrayList();
@@ -156,10 +147,8 @@ public class MainDashboardController {
     private String token;
 
     /**
-     * Método de inicialización llamado automáticamente por JavaFX.
-     * Configura las listas de botones de navegación y paneles de contenido,
-     * selecciona la sección de usuarios por defecto y configura todas las tablas
-     * con sus respectivas columnas y carga inicial de datos.
+     * Este método lo lanza JavaFX al cargar el FXML. Aquí preparamos la UI,
+     * las tablas, las listas y configuramos los estilos de las tarjetas.
      */
     @FXML
     public void initialize() {
@@ -188,6 +177,9 @@ public class MainDashboardController {
         // En lugar de cargar una pestaña por defecto, mostramos la bienvenida
         showWelcomeView();
         
+        // Configuramos el filtrado en tiempo real
+        setupUserFilter();
+        
         if (usuariosTable != null) {
             colUserId.setCellValueFactory(new PropertyValueFactory<>("id"));
             colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
@@ -195,7 +187,8 @@ public class MainDashboardController {
             colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
             colActive.setCellValueFactory(new PropertyValueFactory<>("active"));
 
-            usuariosTable.setItems(usuarios);
+            // Importante: La tabla ahora usa la lista filtrada, no la original
+            usuariosTable.setItems(filteredUsuarios);
 
             // Al hacer doble click sobre un usuario, solicitar detalle por ID.
             usuariosTable.setOnMouseClicked(event -> {
@@ -208,15 +201,39 @@ public class MainDashboardController {
             });
         }
 
-        if (eventosTable != null) {
-            colEventId.setCellValueFactory(new PropertyValueFactory<>("id"));
-            colEventTitle.setCellValueFactory(new PropertyValueFactory<>("title"));
-            colEventDescription.setCellValueFactory(new PropertyValueFactory<>("description"));
-            colEventDate.setCellValueFactory(new PropertyValueFactory<>("date"));
-            colEventLocation.setCellValueFactory(new PropertyValueFactory<>("location"));
+        if (eventListView != null) {
+            eventListView.setItems(eventos);
+            eventListView.getStyleClass().add("timeline-list-view");
+            
+            eventListView.setCellFactory(lv -> new ListCell<>() {
+                @Override
+                protected void updateItem(EventDto item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else {
+                        HBox timelineRow = new HBox(15);
+                        timelineRow.setAlignment(Pos.CENTER_LEFT);
+                        timelineRow.getStyleClass().add("timeline-item");
 
-            eventosTable.setItems(eventos);
-            //loadEvents();
+                        VBox dateBadge = new VBox();
+                        dateBadge.getStyleClass().add("event-date-badge");
+                        Label day = new Label(item.getDate().split("-")[2]); // Asumiendo YYYY-MM-DD
+                        day.getStyleClass().add("event-date-day");
+                        dateBadge.getChildren().add(day);
+
+                        VBox details = new VBox(2);
+                        Label title = new Label(item.getTitle());
+                        title.getStyleClass().add("event-card-title");
+                        Label location = new Label("@ " + item.getLocation());
+                        location.getStyleClass().add("event-card-meta");
+                        
+                        details.getChildren().addAll(title, location);
+                        timelineRow.getChildren().addAll(dateBadge, details);
+                        setGraphic(timelineRow);
+                    }
+                }
+            });
         }
 
         if (mensajesTable != null) {
@@ -231,19 +248,45 @@ public class MainDashboardController {
             //loadMessages();
         }
 
-        if (foroTable != null) {
-            colForumId.setCellValueFactory(new PropertyValueFactory<>("id"));
-            colForumTitle.setCellValueFactory(new PropertyValueFactory<>("title"));
-            colForumAuthor.setCellValueFactory(new PropertyValueFactory<>("author"));
-            colForumDate.setCellValueFactory(new PropertyValueFactory<>("date"));
-
-            foroTable.setItems(foroPosts);
-            //loadForumPosts();
+        if (forumListView != null) {
+            forumListView.setItems(foroPosts);
+            forumListView.getStyleClass().add("forum-list-view");
+            
+            // Definimos cómo se ve cada "tarjeta" del foro
+            forumListView.setCellFactory(lv -> new ListCell<>() {
+                @Override
+                protected void updateItem(ForumDto item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else {
+                        VBox card = new VBox(5);
+                        card.getStyleClass().add("forum-card");
+                        
+                        Label title = new Label(item.getTitle());
+                        title.getStyleClass().add("forum-card-title");
+                        
+                        Label meta = new Label();
+                        meta.getStyleClass().add("forum-card-meta");
+                        meta.setText("Publicado por ");
+                        
+                        Label author = new Label(item.getAuthor());
+                        author.getStyleClass().add("forum-author-tag");
+                        
+                        HBox metaBox = new HBox(author, new Label(" • " + (item.getDate() != null ? item.getDate() : "Reciente")));
+                        metaBox.setAlignment(Pos.CENTER_LEFT);
+                        
+                        card.getChildren().addAll(title, metaBox);
+                        setGraphic(card);
+                    }
+                }
+            });
         }
     }
 
     /**
-     * Muestra una pantalla de bienvenida en el área de contenido principal.
+     * Limpia la parte derecha y pone el mensaje de bienvenida con el logo.
+     * Esto es lo primero que ve el usuario al entrar.
      */
     private void showWelcomeView() {
         contentArea.getChildren().clear();
@@ -278,8 +321,8 @@ public class MainDashboardController {
     }
 
     /**
-     * Método genérico para cargar vistas FXML en el área de contenido.
-     * Ajusta la vista para que ocupe todo el espacio disponible.
+     * Un "comodín" para cargar archivos FXML externos dentro del StackPane de la derecha.
+     * Muy útil si decidimos separar las secciones en archivos independientes.
      */
     private <T> T loadView(String fxmlPath) {
         try {
@@ -303,7 +346,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Muestra la sección de usuarios en el panel principal.
+     * Cambia la vista a la gestión de usuarios y refresca la tabla.
      */
     @FXML
     private void showUsuarios() {
@@ -315,7 +358,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Muestra la sección del foro en el panel principal.
+     * Cambia la vista al foro dinámico (estilo tarjetas).
      */
     @FXML
     private void showForo() {
@@ -327,7 +370,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Muestra la sección de eventos en el panel principal.
+     * Cambia la vista a la línea de tiempo de eventos.
      */
     @FXML
     private void showEventos() {
@@ -339,7 +382,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Muestra la sección de mensajes en el panel principal.
+     * Cambia la vista a la bandeja de mensajes.
      */
     @FXML
     private void showMensajes() {
@@ -351,10 +394,8 @@ public class MainDashboardController {
     }
 
     /**
-     * Maneja el cierre de sesión del usuario.
-     * Navega de vuelta a la pantalla de login, cerrando la sesión actual.
-     *
-     * @throws IOException Si ocurre un error al cargar la vista de login
+     * Cierra la sesión en el servicio y nos devuelve a la pantalla de login
+     * ajustando de nuevo el tamaño de la ventana.
      */
    @FXML
     private void handleLogout(ActionEvent event) {
@@ -370,7 +411,7 @@ public class MainDashboardController {
         Parent root = loader.load();
         
         // 2. Preparar la escena
-        Scene scene = new Scene(root);
+        Scene scene = new Scene(root, 420, 440);
         
         // 3. INTENTO DE CSS (Ruta corregida a login.css)
         try {
@@ -391,11 +432,11 @@ public class MainDashboardController {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         
         stage.setMaximized(false); // Quitar el maximizado
+        stage.setResizable(false); // Volver a bloquear el tamaño
         stage.setScene(scene);
         
-        // Ajustamos el tamaño a lo que suele medir un login (ejemplo 450x600)
-        stage.setWidth(450); 
-        stage.setHeight(600);
+        // Sincronizamos con el tamaño exacto de App.java
+        stage.sizeToScene();
         
         stage.centerOnScreen();
         stage.show();
@@ -409,11 +450,36 @@ public class MainDashboardController {
 }
 
     /**
-     * Carga la lista de usuarios desde la API y actualiza la tabla correspondiente.
-     * En caso de error en la comunicación con el servidor, imprime el error en consola.
+     * Configuramos el buscador para que filtre la lista de usuarios mientras escribes.
      */
-  // ...
+    private void setupUserFilter() {
+        if (searchUserField != null) {
+            searchUserField.textProperty().addListener((observable, oldValue, newValue) -> {
+                filteredUsuarios.setPredicate(user -> {
+                    // Si el buscador está vacío, enseñamos a todo el mundo
+                    if (newValue == null || newValue.isBlank()) {
+                        return true;
+                    }
 
+                    String lowerCaseFilter = newValue.toLowerCase().trim();
+
+                    // Comprobamos si el nombre o el email contienen lo que buscamos
+                    if (user.getUsername() != null && user.getUsername().toLowerCase().contains(lowerCaseFilter)) {
+                        return true;
+                    }
+                    if (user.getEmail() != null && user.getEmail().toLowerCase().contains(lowerCaseFilter)) {
+                        return true;
+                    }
+
+                    return false; // No hay coincidencia
+                });
+            });
+        }
+    }
+
+    /**
+     * Llama a la API para traer los usuarios y actualiza la tabla en el hilo de la UI.
+     */
 private void loadUsers() {
     try {
         List<UserDto> list = userApiClient.getAllUsers();
@@ -434,12 +500,9 @@ private void loadUsers() {
     }
 }
 
-
     /**
-     * Solicita al backend la información completa de un usuario por su ID.
-     * Muestra un diálogo con los datos obtenidos.
-     *
-     * @param userId ID del usuario a consultar
+     * Al hacer doble clic en un usuario, abrimos un mensaje con todos sus detalles
+     * que nos trae la API por ID.
      */
     private void showUserDetails(Long userId) {
         try {
@@ -469,49 +532,44 @@ private void loadUsers() {
     }
 
     /**
-     * Carga la lista de eventos desde la API y actualiza la tabla correspondiente.
-     * En caso de error en la comunicación con el servidor, imprime el error en consola.
+     * Actualiza la lista de eventos desde el servidor.
      */
     private void loadEvents() {
         try {
             List<EventDto> list = eventApiClient.getAllEvents();
-            eventos.setAll(list);
+            Platform.runLater(() -> eventos.setAll(list));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Carga la lista de mensajes desde la API y actualiza la tabla correspondiente.
-     * En caso de error en la comunicación con el servidor, imprime el error en consola.
+     * Actualiza la bandeja de entrada de mensajes.
      */
     private void loadMessages() {
         try {
             List<MessageDto> list = messageApiClient.getAllMessages();
-            mensajes.setAll(list);
+            Platform.runLater(() -> mensajes.setAll(list));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Carga la lista de publicaciones del foro desde la API y actualiza la tabla correspondiente.
-     * En caso de error en la comunicación con el servidor, imprime el error en consola.
+     * Actualiza los temas del foro.
      */
     private void loadForumPosts() {
         try {
             List<ForumDto> list = forumApiClient.getAllForumPosts();
-            foroPosts.setAll(list);
+            Platform.runLater(() -> foroPosts.setAll(list));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Selecciona y muestra el panel de contenido correspondiente al índice especificado.
-     * Actualiza el estilo de los botones de navegación para resaltar el seleccionado.
-     *
-     * @param index El índice del elemento del menú a seleccionar (0-3)
+     * Gestiona el estilo visual de los botones del menú lateral para que 
+     * sepamos siempre en qué sección estamos.
      */
     private void selectMenuItem(int index) {
         for (int i = 0; i < menuButtons.size(); i++) {
@@ -524,6 +582,9 @@ private void loadUsers() {
         }
     }
 
+    /**
+     * Abre un diálogo modal para crear un nuevo usuario.
+     */
     @FXML
     private void handleNewUser() {
         System.out.println("handleNewUser called");
@@ -611,6 +672,9 @@ private void loadUsers() {
         dialog.showAndWait();
     }
 
+    /**
+     * Abre un diálogo modal para crear un nuevo tema en el foro.
+     */
     @FXML
     private void handleNewForum() {
         Stage dialog = new Stage();
@@ -681,6 +745,9 @@ private void loadUsers() {
         dialog.showAndWait();
     }
 
+    /**
+     * Abre un diálogo modal para crear un nuevo evento.
+     */
     @FXML
     private void handleNewEvent() {
         Stage dialog = new Stage();
@@ -762,6 +829,9 @@ private void loadUsers() {
         dialog.showAndWait();
     }
 
+    /**
+     * Abre un diálogo modal para mandar un nuevo mensaje.
+     */
     @FXML
     private void handleNewMessage() {
         Stage dialog = new Stage();
@@ -844,10 +914,7 @@ private void loadUsers() {
     }
 
     /**
-     * Muestra un diálogo de error con el título y mensaje especificados.
-     *
-     * @param title El título del diálogo de error
-     * @param message El mensaje descriptivo del error
+     * Método de utilidad para sacar alertas de error rápidas.
      */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -857,20 +924,20 @@ private void loadUsers() {
         alert.showAndWait();
     }
     
-public void setToken(String token) {
-    this.token = token;
+    /**
+     * Guardamos el token en el controlador y se lo pasamos a todos los clientes API
+     * para que puedan funcionar.
+     */
+    public void setToken(String token) {
+        this.token = token;
 
-    // pasar token a los clientes
-    userApiClient.setToken(token);
-    eventApiClient.setToken(token);
-    messageApiClient.setToken(token);
-    forumApiClient.setToken(token);
-    
-    // Cargar datos ahora que el token existe
-    loadUsers();
-    //loadEvents();
-    //loadMessages();
-    //loadForumPosts();
-}
+        // Pasar token a los clientes de API
+        userApiClient.setToken(token);
+        eventApiClient.setToken(token);
+        messageApiClient.setToken(token);
+        forumApiClient.setToken(token);
 
+        // Carga inicial de usuarios tras recibir el token
+        loadUsers();
+    }
 }

@@ -1,105 +1,30 @@
 package com.aja.api;
 
-import com.aja.config.AppConfig;
 import com.aja.model.ApiResponse;
 import com.aja.model.MessageDto;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.List;
 
-/**
- * Cliente para consumir la API REST de mensajes.
- * Maneja la comunicación con el servidor para obtener mensajes del sistema,
- * incluyendo información sobre remitentes, destinatarios y estado de lectura.
- */
-public class MessageApiClient {
-
-    private static final String BASE_URL = AppConfig.getApiBaseUrl();
-
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
-    private String token;
-
+public class MessageApiClient extends BaseApiClient {
+    
     /**
-     * Constructor que inicializa el cliente HTTP y el mapper de JSON.
+     * Constructor: Inicializa la base para los mensajes.
      */
     public MessageApiClient() {
-        this.httpClient = HttpClientProvider.getClient();
-        this.objectMapper = new ObjectMapper();
+        super();    
     }
 
     /**
-     * Obtiene la lista completa de mensajes del sistema.
-     * Realiza una petición GET al endpoint /api/messages con autenticación básica.
-     *
-     * @return Lista de objetos MessageDto con la información de todos los mensajes
-     * @throws Exception Si ocurre un error en la comunicación con el servidor
-     *                   o en el procesamiento de la respuesta JSON
+     * Recuperamos la lista de todos los mensajes del servidor.
      */
     public List<MessageDto> getAllMessages() throws Exception {
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/api/messages"))
-                .header("Accept", "application/json")
-                .GET();
-
-        if (token != null && !token.isBlank()) {
-            requestBuilder.header("Authorization", "Bearer " + token);
-        }
-
-        HttpRequest request = requestBuilder.build();
-
-        HttpResponse<String> response =
-                httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("Error API /api/messages: " + response.statusCode());
-        }
-
-        ApiResponse<List<MessageDto>> responseObj = objectMapper.readValue(
-                response.body(), 
-                new TypeReference<ApiResponse<List<MessageDto>>>() {});
-        return responseObj.getMessage();
+        return get("/api/messages", new TypeReference<ApiResponse<List<MessageDto>>>() {});
     }
 
     /**
-     * Crea un nuevo mensaje enviando una petición POST a /api/messages.
-     *
-     * @param message El DTO del mensaje a crear
-     * @return El DTO del mensaje creado (con ID asignado)
-     * @throws Exception Si ocurre un error en la comunicación o parseo
+     * Mandamos un nuevo mensaje al sistema.
      */
     public MessageDto createMessage(MessageDto message) throws Exception {
-        String json = objectMapper.writeValueAsString(message);
-
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/api/messages"))
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json));
-
-        if (token != null && !token.isBlank()) {
-            requestBuilder.header("Authorization", "Bearer " + token);
-        }
-
-        HttpResponse<String> response =
-                httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() != 201 && response.statusCode() != 200) {
-            throw new RuntimeException("Error creando mensaje: " + response.statusCode() + " - " + response.body());
-        }
-
-        ApiResponse<MessageDto> responseObj = objectMapper.readValue(
-                response.body(), 
-                new TypeReference<ApiResponse<MessageDto>>() {});
-        return responseObj.getMessage();
-    }
-
-    public void setToken(String token) {
-        this.token = token;
+        return post("/api/messages", message, new TypeReference<ApiResponse<MessageDto>>() {});
     }
 }

@@ -5,19 +5,18 @@
 package com.aja.model;
 
 /**
- * Clase genérica que representa la estructura estándar de una respuesta de la API.
- * Sirve para encapsular los datos devueltos por el servidor junto con su estado de éxito.
- *
- * @author Usuario
- * @param <T> El tipo de dato del mensaje o payload que devuelve la API (puede ser un String, un UserDto, etc.).
+ * Estructura estándar que nos devuelve la API. 
+ * Envuelve los datos reales (message) y nos dice si la operación fue bien (success).
  */
 public class ApiResponse<T> {
-    
+    // Los datos reales que devuelve la API (una lista, un objeto, un texto...)
     private T message;
+    
+    // Indica si la operación fue bien o hubo algún fallo en el servidor
     private boolean success;
 
     /**
-     * Constructor por defecto de ApiResponse.
+     * Constructor vacío necesario para que Jackson pueda crear el objeto.
      */
     public ApiResponse() {
     }

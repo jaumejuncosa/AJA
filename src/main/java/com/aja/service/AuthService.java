@@ -15,22 +15,22 @@ import com.aja.config.AppConfig;
 import com.aja.api.HttpClientProvider;
 
 /**
- * Servicio de autenticación para la aplicación AJA Desktop.
- *
- * Implementa autenticación contra el backend remoto mediante la obtención de un
- * JWT que se recibe en una cookie. El cliente HTTP comparte un CookieManager
- * para que la cookie se envíe automáticamente en peticiones posteriores.
+ * Servicio que maneja la sesión y el login. 
+ * Se comunica con la API para validar las credenciales y guarda el usuario actual.
  */
 public class AuthService {
-
+    // Singleton: Solo queremos una instancia de este servicio en toda la app
     private static final AuthService INSTANCE = new AuthService();
 
     public static AuthService getInstance() {
         return INSTANCE;
     }
 
+    // Cliente y herramientas para el login
     private final HttpClient httpClient = HttpClientProvider.getClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    // Datos del usuario logueado actualmente
     private UserDto currentUser;
     private String token;
 
@@ -38,11 +38,8 @@ public class AuthService {
     }
 
     /**
-     * Intenta autenticar al usuario contra el backend.
-     *
-     * @param username Nombre de usuario
-     * @param password Contraseña
-     * @return LoginResponseDto con el resultado de la autenticación y mensaje
+     * Preparamos la petición POST, mandamos las credenciales y, si el servidor 
+     * nos da el OK, guardamos el token y el usuario en memoria para el resto de la app.
      */
     public LoginResponseDto authenticate(String username, String password) {
         if (username == null || password == null) {
@@ -95,17 +92,14 @@ public class AuthService {
     }
 
     /**
-     * Obtiene la información del usuario actualmente autenticado.
-     *
-     * @return El UserDto del usuario actual, o null si no hay usuario autenticado
+     * Devuelve el usuario que ha iniciado sesión.
      */
     public UserDto getCurrentUser() {
         return currentUser;
     }
 
     /**
-     * Cierra la sesión del usuario actual.
-     * Limpia la información del usuario y las cookies de sesión.
+     * "Limpiamos" la sesión local.
      */
     public void logout() {
         currentUser = null;
@@ -113,6 +107,9 @@ public class AuthService {
         // o se puede implementar una llamada al servidor para invalidar la sesión
     }
 
+    /**
+     * Devuelve el token JWT almacenado.
+     */
     public String getToken() {
         return this.token;
     }

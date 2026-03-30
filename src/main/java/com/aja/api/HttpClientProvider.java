@@ -5,9 +5,8 @@ import java.net.CookiePolicy;
 import java.net.http.HttpClient;
 
 /**
- * Proveedor de cliente HTTP compartido para todas las llamadas a la API.
- * Configura un CookieManager para manejar automáticamente las cookies de sesión,
- * incluyendo el JWT recibido durante el login.
+ * Aquí configuramos el cliente HTTP una sola vez para que lo usen todos los servicios.
+ * Incluye un gestor de cookies para mantener la sesión abierta automáticamente.
  */
 public class HttpClientProvider {
 

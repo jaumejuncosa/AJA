@@ -27,7 +27,8 @@ public class App extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/login.fxml"));
         Parent root = loader.load();
 
-        Scene scene = new Scene(root, 420, 380);
+        // Aumentamos el alto a 440 para que quepan los mensajes de error debajo de los campos
+        Scene scene = new Scene(root, 420, 440);
         scene.getStylesheets().add(getClass().getResource("/styles/login.css").toExternalForm());
 
         stage.setTitle("AJA - Iniciar sesión");

@@ -18,9 +18,6 @@
 
 .login-container {
     -fx-background-color: -fx-surface;
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 20, 0, 0, 4);
 }
 
 .app-title {
@@ -101,4 +98,25 @@
 
 .hyperlink:hover {
     -fx-underline: true;
+}
+
+/* Estilo para resaltar campos con errores de validación */
+.text-field.error-field, .password-field.error-field {
+    -fx-border-color: #ef4444 !important; /* Rojo intenso */
+    -fx-border-width: 2px !important;
+    -fx-border-radius: 5px !important;
+    -fx-background-radius: 5px !important;
+}
+
+/* Opcional: que el borde cambie un poco al poner el cursor encima si hay error */
+.text-field.error-field:focused, .password-field.error-field:focused {
+    -fx-border-color: #dc2626 !important;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.2), 10, 0, 0, 0);
+}
+
+.error-label {
+    -fx-text-fill: #ef4444;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-padding: 2 0 0 4;
 }

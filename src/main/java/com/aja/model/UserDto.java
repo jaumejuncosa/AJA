@@ -1,9 +1,7 @@
 package com.aja.model;
 
 /**
- * Representa la información de un usuario en el sistema.
- * Esta clase se utiliza para transferir datos de usuario entre la aplicación
- * de escritorio y el servidor backend.
+ * Objeto para transportar la información de los usuarios entre la API y la aplicación.
  */
 public class UserDto {
 
@@ -101,4 +99,3 @@ public class UserDto {
         this.isActive = isActive;
     }
 }
-
