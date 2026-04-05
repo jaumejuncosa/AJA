@@ -1,68 +1,57 @@
 package com.aja.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+
 /**
- * Este objeto guarda la información de cada tema o post del foro.
+ * DTO que representa un hilo del foro (ForumEntity).
+ * Mapea tanto el resumen para listas como el detalle completo con comentarios.
  */
 public class ForumDto {
-
     private Long id;
     private String title;
-    private String author;
+    private String content; // Cuerpo del post (devuelto por getForum)
+    
+    @JsonProperty("creationDate")
     private String date;
+    
+    private UserDto userOwner; // El JSON trae un objeto userOwner
+    private TopicDto forum;    // El JSON trae un objeto forum (Categoría)
+    private List<CommentDto> comments; // Comentarios reales vinculados
 
-    /**
-     * El ID del post en el foro.
-     */
-    public Long getId() {
-        return id;
-    }
+    public ForumDto() {}
 
-    /**
-     * Guardamos el ID del post.
-     */
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    /**
-     * El título que se le ha puesto al hilo del foro.
-     */
-    public String getTitle() {
-        return title;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    /**
-     * Guardamos el título del post.
-     */
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public String getAuthor() { return userOwner != null ? userOwner.getUsername() : "anónimo"; }
 
-    /**
-     * El nombre de usuario de la persona que escribió el post.
-     */
-    public String getAuthor() {
-        return author;
-    }
-
-    /**
-     * Guardamos quién es el autor.
-     */
     public void setAuthor(String author) {
-        this.author = author;
+        if (this.userOwner == null) {
+            this.userOwner = new UserDto();
+        }
+        this.userOwner.setUsername(author);
     }
 
-    /**
-     * Cuándo se publicó el post originalmente.
-     */
-    public String getDate() {
-        return date;
-    }
+    public void setUserOwner(UserDto userOwner) { this.userOwner = userOwner; }
+
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
 
     /**
-     * Guardamos la fecha de publicación.
+     * Devuelve el ID de la comunidad (forum) asociada a este post.
      */
-    public void setDate(String date) {
-        this.date = date;
-    }
+    public Long getForumId() { return forum != null ? forum.getId() : -1L; }
+
+    public String getCategory() { return forum != null ? forum.getTitle() : "General"; }
+    public void setForum(TopicDto forum) { this.forum = forum; }
+
+    public List<CommentDto> getComments() { return comments; }
+    public void setComments(List<CommentDto> comments) { this.comments = comments; }
 }

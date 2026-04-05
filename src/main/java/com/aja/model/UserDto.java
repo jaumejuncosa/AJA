@@ -1,101 +1,41 @@
 package com.aja.model;
 
-/**
- * Objeto para transportar la información de los usuarios entre la API y la aplicación.
- */
-public class UserDto {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+public class UserDto {
     private Long id;
     private String username;
     private String email;
     private String role;
-    private Boolean isActive;
+    private String password;
 
-    /**
-     * Obtiene el identificador único del usuario.
-     * @return el ID del usuario
-     */
-    public Long getId() {
-        return id;
-    }
+    private Boolean active;
+    
+    private String registerDate;
 
-    /**
-     * Establece el identificador único del usuario.
-     * @param id el ID del usuario
-     */
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public UserDto() {}
 
-    /**
-     * Obtiene el nombre de usuario.
-     * @return el nombre de usuario
-     */
-    public String getUsername() {
-        return username;
-    }
+    // Getters y Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    /**
-     * Establece el nombre de usuario.
-     * @param username el nombre de usuario
-     */
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    /**
-     * Obtiene la dirección de correo electrónico del usuario.
-     * @return el email del usuario
-     */
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    /**
-     * Establece la dirección de correo electrónico del usuario.
-     * @param email el email del usuario
-     */
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 
-    /**
-     * Obtiene el rol del usuario en el sistema.
-     * @return el rol del usuario (como string)
-     */
-    public String getRole() {
-        return role;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    /**
-     * Establece el rol del usuario en el sistema.
-     * @param role el rol del usuario (como string)
-     */
-    public void setRole(String role) {
-        this.role = role;
-    }
+    @JsonProperty("isActive")
+    public Boolean isActive() { return active; }
+    @JsonProperty("isActive")
+    public void setActive(Boolean active) { this.active = active; }
 
-    /**
-     * Obtiene el rol del usuario como enumeración.
-     * @return el rol del usuario como objeto Role
-     */
-    public Role getRoleEnum() {
-        return role != null ? Role.fromString(role) : null;
-    }
-
-    /**
-     * Indica si el usuario está activo en el sistema.
-     * @return true si el usuario está activo, false en caso contrario
-     */
-    public Boolean getActive() {
-        return isActive;
-    }
-
-    /**
-     * Establece el estado de actividad del usuario.
-     * @param isActive true para activar el usuario, false para desactivarlo
-     */
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
+    public String getRegisterDate() { return registerDate; }
+    public void setRegisterDate(String registerDate) { this.registerDate = registerDate; }
 }

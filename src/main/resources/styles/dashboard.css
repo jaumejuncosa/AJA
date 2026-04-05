@@ -281,30 +281,75 @@
     -fx-padding: 8;
 }
 
+/* ----- Reddit Style Forum ----- */
+.forum-sidebar {
+    -fx-background-color: transparent;
+    -fx-padding: 0 10 0 0;
+}
+
+.category-list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+}
+
+.category-list-view .list-cell {
+    -fx-padding: 10 12;
+    -fx-background-radius: 8;
+    -fx-text-fill: #475569;
+    -fx-font-weight: 500;
+}
+
+.category-list-view .list-cell:selected {
+    -fx-background-color: #e2e8f0;
+    -fx-text-fill: #0f172a;
+}
+
+.category-header-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1e293b;
+}
+
 .forum-card {
     -fx-background-color: white;
-    -fx-padding: 15;
-    -fx-background-radius: 10;
-    -fx-border-radius: 10;
+    -fx-padding: 12 16;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
     -fx-border-color: #e2e8f0;
     -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
 }
 
 .forum-card:hover {
-    -fx-border-color: #3b82f6;
+    -fx-border-color: #94a3b8;
     -fx-cursor: hand;
 }
 
 .forum-card-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: 700;
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
     -fx-text-fill: #1e293b;
 }
 
 .forum-card-meta {
     -fx-font-size: 12px;
     -fx-text-fill: #64748b;
+}
+
+.thread-content-container {
+    -fx-max-width: 900px; /* Centramos el contenido del hilo para lectura fácil */
+}
+
+.comment-card {
+    -fx-background-color: #f8fafc;
+    -fx-padding: 12;
+    -fx-background-radius: 6;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 0 0 3; /* Estilo 'quote' para comentarios */
+}
+
+.forum-thread-view .text-area {
+    -fx-focus-color: #2563eb;
+    -fx-control-inner-background: #ffffff;
 }
 
 .forum-author-tag {

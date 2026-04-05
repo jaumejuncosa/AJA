@@ -2,12 +2,14 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
@@ -43,6 +45,11 @@
                     <Label styleClass="user-label" text="Email:" />
                     <Label fx:id="lblUserEmail" styleClass="user-email" text="email@dominio.com" />
                 </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="6">
+                    <Label styleClass="user-label" text="Registro:" />
+                    <Label fx:id="lblUserRegisterDate" styleClass="user-email" text="00/00/0000" />
+                </HBox>
+                <Button onAction="#handleEditProfile" styleClass="menu-button" style="-fx-font-size: 11px; -fx-padding: 5 10;" text="⚙ Editar Perfil" />
             </VBox>
 
             <!-- Separador -->
@@ -63,7 +70,7 @@
             <!-- Pie del panel -->
             <VBox spacing="8" styleClass="sidebar-footer">
                 <Button fx:id="btnLogout" onAction="#handleLogout" styleClass="menu-button logout-button" text="Cerrar sesión" />
-                <Label styleClass="sidebar-version" text="AJA Desktop v1.0" />
+                <Label fx:id="lblVersion" styleClass="sidebar-version" />
             </VBox>
         </VBox>
     </left>
@@ -95,6 +102,7 @@
                             </padding>
                         </Label>
                     </StackPane>
+                    <CheckBox fx:id="activeUsersCheckBox" onAction="#handleActiveUsersFilter" text="Solo usuarios activos" />
 
                     <Button fx:id="newUserButton" disable="true" onAction="#handleNewUser" styleClass="primary-action-button" text="Nuevo usuario" visible="false" />
                 </HBox>
@@ -107,6 +115,7 @@
                         <TableColumn fx:id="colEmail" prefWidth="260" text="Email" />
                         <TableColumn fx:id="colRole" prefWidth="120" text="Rol" />
                         <TableColumn fx:id="colActive" prefWidth="120" text="Activo" />
+                        <TableColumn fx:id="colRegisterDate" prefWidth="150" text="Fecha Registro" />
                     </columns>
                 </TableView>
             </VBox>
@@ -120,15 +129,67 @@
                 <!-- Cabecera -->
                 <HBox alignment="CENTER_LEFT" spacing="16">
                     <VBox spacing="4">
-                        <Label styleClass="content-page-title" text="Foro" />
-                        <Label styleClass="content-page-subtitle" text="Participa y modera las conversaciones del foro" />
+                        <Label styleClass="content-page-title" text="Foro Comunitario" />
+                        <Label styleClass="content-page-subtitle" text="Explora comunidades y participa en los debates" />
                     </VBox>
                     <Pane HBox.hgrow="ALWAYS" />
-                    <Button fx:id="newForumButton" disable="true" onAction="#handleNewForum" styleClass="primary-action-button" text="Nuevo tema" visible="false" />
+                    <Button fx:id="newForumButton" onAction="#handleNewForum" styleClass="primary-action-button" text="+ Nuevo tema" visible="false" managed="false" />
                 </HBox>
 
-                <!-- Lista de foro (estilo tarjetas) -->
-                <ListView fx:id="forumListView" VBox.vgrow="ALWAYS" />
+                <HBox fx:id="forumMainContainer" spacing="20" VBox.vgrow="ALWAYS">
+                    <!-- Sidebar de Categorías (Sub-foros) -->
+                    <VBox maxWidth="220" minWidth="220" spacing="10" styleClass="forum-sidebar">
+                        <Label styleClass="menu-section-label" text="MIS COMUNIDADES" />
+                        <ListView fx:id="categoryListView" prefHeight="400" styleClass="category-list-view" />
+                    </VBox>
+
+                    <!-- Feed de Temas (Reddit Style) -->
+                    <VBox spacing="10" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" styleClass="forum-filter-bar">
+                            <Label fx:id="lblSelectedCategory" text="Todos los temas" styleClass="category-header-label" />
+                        </HBox>
+                        <ListView fx:id="forumListView" VBox.vgrow="ALWAYS" />
+                    </VBox>
+                </HBox>
+
+                <!-- Vista de Hilo Detallado (Reddit Style) -->
+                <VBox fx:id="forumThreadView" spacing="16" visible="false" managed="false" VBox.vgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Button onAction="#backToForumList" styleClass="menu-button" text="← Volver al foro" style="-fx-padding: 5 0; -fx-text-fill: #2563eb;" />
+                        <Pane HBox.hgrow="ALWAYS" />
+                        <!-- Acciones de Administrador -->
+                        <HBox fx:id="adminForumActions" spacing="10" visible="false" managed="false">
+                            <Button onAction="#handleEditCurrentThread" styleClass="menu-button" text="📝 Editar" style="-fx-text-fill: #f59e0b; -fx-font-size: 12px;" />
+                            <Button onAction="#handleDeleteCurrentThread" styleClass="menu-button" text="🗑 Eliminar" style="-fx-text-fill: #ef4444; -fx-font-size: 12px;" />
+                        </HBox>
+                    </HBox>
+                    
+                    <VBox spacing="10" styleClass="thread-content-container">
+                        <VBox spacing="8" styleClass="forum-card" style="-fx-background-color: white; -fx-padding: 20;">
+                            <HBox spacing="5" alignment="CENTER_LEFT">
+                                <Label fx:id="lblThreadAuthor" styleClass="forum-author-tag" />
+                                <Label fx:id="lblThreadDate" styleClass="forum-card-meta" />
+                            </HBox>
+                            <Label fx:id="lblThreadTitle" styleClass="content-page-title" style="-fx-font-size: 20px;" wrapText="true" />
+                            <!-- Nuevo: Contenido del post -->
+                            <Label fx:id="lblThreadBody" styleClass="forum-card-meta" style="-fx-text-fill: #334155; -fx-font-size: 14px;" wrapText="true" />
+                        </VBox>
+
+                        <Separator />
+                        
+                        <!-- Caja para comentar estilo Reddit -->
+                        <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-border-color: #e2e8f0; -fx-border-radius: 4;">
+                            <Label text="Comentar como usuario" styleClass="user-label" />
+                            <TextArea fx:id="txtCommentInput" prefHeight="100" promptText="¿Qué piensas?" styleClass="search-field" wrapText="true" />
+                            <HBox alignment="CENTER_RIGHT">
+                                <Button fx:id="btnPostComment" onAction="#handlePostComment" styleClass="primary-action-button" text="Comentar" />
+                            </HBox>
+                        </VBox>
+
+                        <Label text="Comentarios" styleClass="menu-section-label" />
+                        <VBox fx:id="commentsContainer" spacing="12" />
+                    </VBox>
+                </VBox>
             </VBox>
 
             <!-- Sección Eventos -->

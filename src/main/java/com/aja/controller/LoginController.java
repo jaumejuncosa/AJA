@@ -1,5 +1,7 @@
 package com.aja.controller;
+import com.aja.api.UserApiClient;
 import com.aja.model.LoginResponseDto;
+import com.aja.model.UserNewDto;
 import com.aja.service.AuthService;
 
 import javafx.fxml.FXMLLoader;
@@ -9,6 +11,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -217,7 +220,6 @@ private final AuthService authService = AuthService.getInstance();
         showError("Error inesperado", "Ocurrió un error al inicializar el Dashboard: " + e.getMessage());
     }
 }
-
     /**
      * Acción para cuando alguien olvida la contraseña. De momento solo avisamos.
      */
@@ -225,6 +227,55 @@ private final AuthService authService = AuthService.getInstance();
     private void handleForgotPassword() {
         showInfo("Recuperar contraseña", 
                 "Funcionalidad de recuperación de contraseña.\n(Implementar según tus necesidades)");
+    }
+
+    /**
+     * REGISTRO/ALTA: Permite que cualquier persona cree una cuenta desde el login.
+     */
+    @FXML
+    private void handleRegister() {
+        Stage dialog = new Stage();
+        dialog.setTitle("Crear nueva cuenta");
+        
+        VBox layout = new VBox(10);
+        layout.setPadding(new javafx.geometry.Insets(20));
+        layout.setStyle("-fx-background-color: white;");
+
+        TextField userField = new TextField();
+        userField.setPromptText("Usuario");
+        PasswordField passField = new PasswordField();
+        passField.setPromptText("Contraseña");
+        TextField emailField = new TextField();
+        emailField.setPromptText("Email");
+
+        Button btnAlta = new Button("Registrarse");
+        btnAlta.setMaxWidth(Double.MAX_VALUE);
+        btnAlta.setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        layout.getChildren().addAll(
+            new Label("Únete a AJA Team"),
+            userField, passField, emailField, btnAlta
+        );
+
+        btnAlta.setOnAction(e -> {
+            try {
+                UserNewDto newUser = new UserNewDto();
+                newUser.setUsername(userField.getText());
+                newUser.setPassword(passField.getText());
+                newUser.setEmail(emailField.getText());
+
+                UserApiClient client = new UserApiClient();
+                client.createUser(newUser);
+                
+                dialog.close();
+                showInfo("Éxito", "Cuenta creada. Ya puedes iniciar sesión.");
+            } catch (Exception ex) {
+                showError("Error", "No se pudo realizar el alta: " + ex.getMessage());
+            }
+        });
+
+        dialog.setScene(new Scene(layout, 300, 350));
+        dialog.show();
     }
 
     /**

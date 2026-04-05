@@ -67,6 +67,14 @@ public class AuthService {
             System.out.println("Login response status: " + response.statusCode());
             System.out.println("Login response body: " + response.body());
 
+            // COMPROBACIÓN CRÍTICA: Si el servidor falla (502, 500, 404), no intentamos leer JSON
+            if (response.statusCode() != 200) {
+                LoginResponseDto errorResponse = new LoginResponseDto();
+                errorResponse.setSuccess(false);
+                errorResponse.setMessage("El servidor no responde correctamente (Error " + response.statusCode() + ")");
+                return errorResponse;
+            }
+
             // Parsear respuesta JSON
             LoginResponseDto loginResponse = objectMapper.readValue(response.body(), LoginResponseDto.class);
 

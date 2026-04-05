@@ -42,6 +42,7 @@ public final class AppConfig {
      * Devuelve la URL de la API (ej: http://localhost:8080).
      */
     public static String getApiBaseUrl() {
-        return properties.getProperty(API_BASE_URL_KEY, DEFAULT_BASE_URL);
+        String url = properties.getProperty(API_BASE_URL_KEY, DEFAULT_BASE_URL);
+        return url != null ? url.trim() : DEFAULT_BASE_URL;
     }
 }

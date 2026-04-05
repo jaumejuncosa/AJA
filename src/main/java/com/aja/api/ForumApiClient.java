@@ -1,31 +1,29 @@
 package com.aja.api;
-import com.aja.model.ApiResponse;
+
 import com.aja.model.ForumDto;
+import com.aja.model.ApiResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
-/**
- * Cliente para interactuar con los temas y posts del foro en la API.
- */
- public class ForumApiClient extends BaseApiClient {
-    
-    /**
-     * Constructor: Preparamos la base para las peticiones del foro.
-     */
-    public ForumApiClient() {
-        super();
-    }
 
-    /**
-     * Obtenemos todos los hilos de conversación abiertos en el foro.
-     */
+public class ForumApiClient extends BaseApiClient {
+
     public List<ForumDto> getAllForumPosts() throws Exception {
-        return get("/api/forum", new TypeReference<ApiResponse<List<ForumDto>>>() {});
+        return get("/api/topic", new TypeReference<ApiResponse<List<ForumDto>>>() {});
     }
 
-    /**
-     * Publicamos un nuevo tema en el foro.
-     */
-    public ForumDto createForumPost(ForumDto forumPost) throws Exception {
-        return post("/api/forum", forumPost, new TypeReference<ApiResponse<ForumDto>>() {});
+    public ForumDto getForumById(Long id) throws Exception {
+        return get("/api/topic/" + id, new TypeReference<ApiResponse<ForumDto>>() {});
+    }
+
+    public String createForumPost(ForumDto post) throws Exception {
+        return post("/api/topic", post, new TypeReference<ApiResponse<String>>() {});
+    }
+
+    public String updateForumPost(ForumDto post) throws Exception {
+        return put("/api/topic", post, new TypeReference<ApiResponse<String>>() {});
+    }
+
+    public String deleteForumPost(Long id) throws Exception {
+        return delete("/api/topic/" + id, new TypeReference<ApiResponse<String>>() {});
     }
 }
