@@ -4,6 +4,7 @@ import com.aja.config.AppConfig;
 import com.aja.model.ApiResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 
 import java.net.URI;
@@ -12,39 +13,38 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public abstract class BaseApiClient {
-    // URL base que sacamos de la configuración global
+    // Dirección principal de la web de donde sacamos los datos
     protected static final String BASE_URL = AppConfig.getApiBaseUrl();
     
-    // El cliente HTTP que reutilizaremos en todas las peticiones
+    // Herramienta para conectarse a internet
     protected final HttpClient httpClient;
     
-    // Mapper para convertir el JSON que nos llega de la API a objetos Java
+    // Traductor para entender los datos que nos envía el servidor
     protected static final ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
     
-    // Token de sesión (JWT) para las peticiones que requieren estar logueado
+    // Llave de seguridad para entrar a zonas privadas
     protected String token;
 
     /**
-     * Constructor base: Preparamos el cliente HTTP y el conversor de JSON.
+     * Configuración inicial: Preparamos la conexión y el traductor.
      */
     public BaseApiClient() {
         this.httpClient = HttpClientProvider.getClient();
     }
 
     /**
-     * Guardamos el token para poder mandarlo en las cabeceras de las peticiones.
+     * Guardamos la llave para usarla en cada puerta que abramos.
      */
     public void setToken(String token) {
         this.token = token;
     }
 
     /**
-     * Método genérico para hacer un GET. 
-     * Se encarga de montar la petición, añadir el token y procesar la respuesta.
+     * Pedir información: Preparamos la nota, enseñamos la llave y leemos lo que nos contestan.
      */
     protected <T> T get(String endpoint, TypeReference<ApiResponse<T>> typeReference) throws Exception {
-        System.out.println("DEBUG GET Request: " + BASE_URL + endpoint);
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + endpoint))
                 .header("Accept", "application/json")
@@ -54,12 +54,10 @@ public abstract class BaseApiClient {
     }
 
     /**
-     * Método genérico para hacer un POST.
-     * Mandamos un objeto en el body, lo convertimos a JSON y esperamos la respuesta.
+     * Enviar información nueva: Escribimos los datos, los mandamos y esperamos la confirmación.
      */
     protected <T> T post(String endpoint, Object body, TypeReference<ApiResponse<T>> typeReference) throws Exception {
         String json = objectMapper.writeValueAsString(body);
-        System.out.println("DEBUG POST [" + endpoint + "]: " + json);
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + endpoint))
                 .header("Accept", "application/json")
@@ -70,24 +68,23 @@ public abstract class BaseApiClient {
     }
 
     /**
-     * Método genérico para hacer un PUT.
-     * Se utiliza para actualizar recursos existentes.
+     * Modificar información: Cambiamos algo que ya existe por datos nuevos.
      */
     protected <T> T put(String endpoint, Object body, TypeReference<ApiResponse<T>> typeReference) throws Exception {
-        String json = objectMapper.writeValueAsString(body);
-        System.out.println("DEBUG PUT [" + endpoint + "]: " + json);
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + endpoint))
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(json));
+    String json = objectMapper.writeValueAsString(body);
+    
+        
+    HttpRequest.Builder builder = HttpRequest.newBuilder()
+            .uri(URI.create(BASE_URL + endpoint))
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/json")
+            .PUT(HttpRequest.BodyPublishers.ofString(json));
 
-        return execute(builder, typeReference);
-    }
+    return execute(builder, typeReference);
+}
 
     /**
-     * Método genérico para hacer un DELETE.
-     * Se utiliza para eliminar recursos por su ID.
+     * Borrar información: Pedimos que quiten algo usando su número de identificación.
      */
     protected <T> T delete(String endpoint, TypeReference<ApiResponse<T>> typeReference) throws Exception {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
@@ -99,25 +96,29 @@ public abstract class BaseApiClient {
     }
 
     /**
-     * Ejecuta la petición, añade el token y procesa el resultado.
+     * Realizar la acción: Pone la llave, hace la llamada y mira qué ha pasado.
      */
     private <T> T execute(HttpRequest.Builder builder, TypeReference<ApiResponse<T>> typeReference) throws Exception {
         addAuthHeader(builder);
+
+        // Depuración: Ver cookies que se enviarán en la petición
+        httpClient.cookieHandler().ifPresent(handler -> {
+            if (handler instanceof java.net.CookieManager cm) {
+               // System.out.println("DEBUG - Cookies enviadas: " + cm.getCookieStore().getCookies());
+            }
+        });
+
         HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-        
+
+        //System.out.println("DEBUG - Response headers: " + response.headers().map()); // ← AÑADE ESTA
+
         int statusCode = response.statusCode();
-        String body = response.body();
-        
-        System.out.println("DEBUG Response Status: " + statusCode);
-        // Intentamos formatear el JSON para que sea fácil de leer en consola
-        Object json = objectMapper.readValue(body, Object.class);
-        System.out.println("DEBUG Response Body:\n" + objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
         
         return processResponse(response, typeReference);
     }
 
     /**
-     * Si tenemos un token guardado, lo metemos en la cabecera 'Authorization'.
+     * Si tenemos la llave, la enseñamos antes de entrar.
      */
     private void addAuthHeader(HttpRequest.Builder builder) {
         if (token != null && !token.isBlank()) {
@@ -126,17 +127,24 @@ public abstract class BaseApiClient {
     }
 
     /**
-     * Comprobamos que la API no haya dado error y extraemos los datos del 'message' del JSON.
+     * Miramos si todo ha ido bien y sacamos el mensaje importante.
      */
     private <T> T processResponse(HttpResponse<String> response, TypeReference<ApiResponse<T>> typeReference) throws Exception {
         String body = response.body();
         int statusCode = response.statusCode();
 
+        // Depuración: Ver si el servidor intenta establecer nuevas cookies (como JSESSIONID)
+        response.headers().allValues("Set-Cookie").forEach(v -> System.out.println("DEBUG - Recibido Set-Cookie: " + v));
+
         if (statusCode >= 200 && statusCode < 300) {
             ApiResponse<T> apiResponse = objectMapper.readValue(body, typeReference);
             return apiResponse.getMessage();
         } else {
-            // Intentamos parsear el error si viene en formato ApiResponse para obtener el mensaje del servidor
+            // Log de depuración para ver por qué el servidor da 403
+            if (statusCode == 403) {
+                System.err.println("ACCESO DENEGADO (403). Body: " + body);
+            }
+            // Si algo falla, intentamos leer por qué ha pasado.
             try {
                 ApiResponse<?> errorResponse = objectMapper.readValue(body, new TypeReference<ApiResponse<Object>>() {});
                 throw new RuntimeException("Error API (" + statusCode + "): " + errorResponse.getMessage());

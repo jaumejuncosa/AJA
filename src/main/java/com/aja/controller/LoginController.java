@@ -18,8 +18,7 @@ import java.io.IOException;
 import java.util.prefs.Preferences;
 
 /**
- * Controlador de la pantalla de Login. 
- * Aquí validamos al usuario y, si todo es correcto, lo mandamos al Dashboard principal.
+ * Maneja la entrada al programa. Comprueba quién eres y te deja pasar al panel de control.
  */
 public class LoginController {
 private final AuthService authService = AuthService.getInstance();
@@ -49,16 +48,15 @@ private final AuthService authService = AuthService.getInstance();
     private Hyperlink forgotPasswordLink;
 
     /**
-     * JavaFX lanza esto al cargar la vista. Configuramos los eventos del teclado 
-     * y cargamos los datos guardados si el usuario marcó "Recordarme" la última vez.
+     * Se activa al abrir la ventana. Prepara el teclado y recuerda tu nombre si lo pediste antes.
      */
     @FXML
     public void initialize() {
-        // Permitir iniciar sesión con Enter
+        // Entrar pulsando la tecla Intro
         passwordField.setOnKeyPressed(this::handleKeyPressed);
         usernameField.setOnKeyPressed(this::handleKeyPressed);
 
-        // Quitar el borde rojo y ocultar el mensaje de error al empezar a escribir
+        // Limpiar los avisos de error cuando el usuario empieza a escribir de nuevo
         usernameField.textProperty().addListener((obs, oldVal, newVal) -> 
             {
                 usernameField.getStyleClass().remove("error-field");
@@ -72,7 +70,7 @@ private final AuthService authService = AuthService.getInstance();
                 passwordErrorLabel.setManaged(false);
             });
 
-        // Cargar credenciales guardadas
+        // Recuperar el nombre y la clave guardados
         String savedUsername = prefs.get(PREF_USERNAME, null);
         String savedPassword = prefs.get(PREF_PASSWORD, null);
         if (savedUsername != null && savedPassword != null) {
@@ -83,8 +81,7 @@ private final AuthService authService = AuthService.getInstance();
     }
 
     /**
-     * Si el usuario pulsa Enter en cualquiera de los campos, 
-     * intentamos hacer el login directamente.
+     * Si pulsas Intro, intentamos entrar al sistema.
      */
     private void handleKeyPressed(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
@@ -93,14 +90,13 @@ private final AuthService authService = AuthService.getInstance();
     }
 
     /**
-     * Recogemos lo que el usuario escribió, comprobamos que no haya dejado nada 
-     * en blanco y pedimos el login al servidor a través del servicio.
+     * Leemos lo escrito, miramos que no falte nada y pedimos permiso para entrar.
      */
     @FXML
    private void handleLogin() {
-    loginButton.setDisable(true); // Desactivamos al hacer clic
+    loginButton.setDisable(true); // Apagamos el botón un momento para no pulsar dos veces
     
-    // Limpiamos estilos de error previos antes de validar
+    // Quitamos los avisos de error anteriores
     usernameField.getStyleClass().remove("error-field");
     passwordField.getStyleClass().remove("error-field");
     usernameErrorLabel.setVisible(false);
@@ -111,7 +107,7 @@ private final AuthService authService = AuthService.getInstance();
     String username = usernameField.getText();
     String password = passwordField.getText();
 
-    // Validación básica
+    // Comprobamos que no haya huecos vacíos
     if (username == null || username.isBlank()) {
         usernameErrorLabel.setText("Por favor, introduce tu usuario.");
         usernameErrorLabel.setVisible(true);
@@ -132,74 +128,83 @@ private final AuthService authService = AuthService.getInstance();
         return;
     }
 
-    // Autenticación usando el servicio
-    LoginResponseDto authResponse = authService.authenticate(username, password);
+    try {
+        // Comprobamos tu identidad
+        LoginResponseDto authResponse = authService.authenticate(username, password);
 
-    if (!authResponse.isSuccess()) {
-        // Mostrar mensaje de error del servidor
-        String errorMessage = authResponse.getMessage() != null ?
-            authResponse.getMessage().toString() :
-            "Credenciales inválidas";
-            
-        // Detectamos si el error es sobre el usuario para poner el mensaje en su sitio
-        if (errorMessage.toLowerCase().contains("usuario") || errorMessage.toLowerCase().contains("user")) {
-            usernameErrorLabel.setText(errorMessage);
-            usernameErrorLabel.setVisible(true);
-            usernameErrorLabel.setManaged(true);
-            usernameField.requestFocus();
+        if (!authResponse.isSuccess()) {
+            // Mostrar aviso de error si algo ha fallado
+            String errorMessage = authResponse.getMessage() != null ?
+                authResponse.getMessage().toString() :
+                "Credenciales inválidas";
+                
+            // Miramos si el problema es el nombre para avisar en el sitio correcto
+            if (errorMessage.toLowerCase().contains("usuario") || errorMessage.toLowerCase().contains("user")) {
+                usernameErrorLabel.setText(errorMessage);
+                usernameErrorLabel.setVisible(true);
+                usernameErrorLabel.setManaged(true);
+                usernameField.requestFocus();
+            } else {
+                passwordErrorLabel.setText(errorMessage);
+                passwordErrorLabel.setVisible(true);
+                passwordErrorLabel.setManaged(true);
+                passwordField.requestFocus();
+            }
+
+            usernameField.getStyleClass().add("error-field");
+            passwordField.getStyleClass().add("error-field");
+            passwordField.clear();
+
+            // Si el error es por inactividad, mostramos un aviso directo para que no pase desapercibido
+            if (errorMessage.toLowerCase().contains("inactivo") || errorMessage.toLowerCase().contains("deshabilitado")) {
+                showError("Acceso denegado", "Tu cuenta está desactivada. Contacta con un administrador.");
+            }
+
+            loginButton.setDisable(false); // Reactivamos el botón
+            return;
+        }
+        
+        String token = authResponse.getToken();
+
+        // Guardar o quitar tus datos según lo que hayas marcado
+        if (rememberCheckBox.isSelected()) {
+            prefs.put(PREF_USERNAME, username);
+            prefs.put(PREF_PASSWORD, password);
         } else {
-            passwordErrorLabel.setText(errorMessage);
-            passwordErrorLabel.setVisible(true);
-            passwordErrorLabel.setManaged(true);
-            passwordField.requestFocus();
+            prefs.remove(PREF_USERNAME);
+            prefs.remove(PREF_PASSWORD);
         }
 
-        usernameField.getStyleClass().add("error-field");
-        passwordField.getStyleClass().add("error-field");
-        passwordField.clear();
-        loginButton.setDisable(false); // Reactivamos el botón
-        return;
+        // Si la llave funciona, entramos al panel principal
+        navigateToDashboard(token);
+    } catch (Exception e) {
+        showError("Error de Conexión", "No se pudo conectar con el servidor. Asegúrate de que el backend esté iniciado.");
+        loginButton.setDisable(false);
     }
-    
-    String token = authResponse.getToken();
-
-    // Guardar o borrar credenciales según el checkbox
-    if (rememberCheckBox.isSelected()) {
-        prefs.put(PREF_USERNAME, username);
-        prefs.put(PREF_PASSWORD, password);
-    } else {
-        prefs.remove(PREF_USERNAME);
-        prefs.remove(PREF_PASSWORD);
-    }
-
-    // Si todo es correcto, navegar al dashboard (¡UNA SOLA VEZ!)
-    navigateToDashboard(token);
 }
 
     /**
-     * Si el servidor nos dio el visto bueno, cambiamos la ventana del login 
-     * por la del Dashboard principal, pasando el token de seguridad.
+     * Si nos dejan entrar, cerramos esta ventana y abrimos el panel de control con nuestra llave.
      */
     private void navigateToDashboard(String token) {
     try {
-        // 1. Cargamos el archivo FXML del Dashboard y obtenemos el root
+        // 1. Preparamos la vista del panel principal
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/MainDashboard.fxml"));
         Parent root = loader.load();
 
-        // 2. Obtener el controller y pasar el token
+        // 2. Buscamos al encargado del panel y le damos la llave
         MainDashboardController dashboardController = loader.getController();
-        dashboardController.setToken(authService.getToken()); // Asegúrate de que AuthService tenga el token
+        dashboardController.setToken(authService.getToken()); 
 
-        // 3. Crear la escena con la vista cargada y añadir los estilos
-        // Sincronizamos el tamaño del Dashboard para que sea consistente
+        // 3. Montamos la ventana con sus colores y tamaño adecuado
         Scene scene = new Scene(root, 1200, 800);
         scene.getStylesheets().add(getClass().getResource("/styles/dashboard.css").toExternalForm());
 
-        // 4. AHORA SÍ: Obtenemos la ventana actual y le aplicamos todo
+        // 4. Cambiamos la ventana que estamos viendo por la nueva
         Stage stage = (Stage) loginButton.getScene().getWindow();
         if (stage == null) {
-    System.out.println("Aviso: Se intentó cargar el Dashboard por segunda vez. Bloqueado.");
-    return; // Cortamos la ejecución aquí para evitar el NullPointerException
+    System.out.println("Aviso: No abrimos el panel dos veces para evitar fallos.");
+    return; 
 }
         stage.setTitle("AJA - Panel de control");
         stage.setScene(scene);
@@ -207,7 +212,7 @@ private final AuthService authService = AuthService.getInstance();
         stage.setMaximized(true);
         stage.centerOnScreen();
 
-        // 5. Y finalmente, mostramos la ventana actualizada
+        // 5. Enseñamos el panel de control
         stage.show();
 
         System.out.println("Dashboard cargado correctamente");
@@ -221,7 +226,7 @@ private final AuthService authService = AuthService.getInstance();
     }
 }
     /**
-     * Acción para cuando alguien olvida la contraseña. De momento solo avisamos.
+     * Qué hacer si olvidas la clave. Por ahora solo mostramos un aviso.
      */
     @FXML
     private void handleForgotPassword() {
@@ -230,7 +235,7 @@ private final AuthService authService = AuthService.getInstance();
     }
 
     /**
-     * REGISTRO/ALTA: Permite que cualquier persona cree una cuenta desde el login.
+     * Crear cuenta: Permite que cualquiera se apunte al sistema.
      */
     @FXML
     private void handleRegister() {
@@ -279,7 +284,7 @@ private final AuthService authService = AuthService.getInstance();
     }
 
     /**
-     * Alerta rápida para errores de validación o fallos en el servidor.
+     * Aviso rápido si algo sale mal o falta información.
      */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -290,7 +295,7 @@ private final AuthService authService = AuthService.getInstance();
     }
 
     /**
-     * Alerta rápida para mensajes de información.
+     * Aviso rápido para dar noticias.
      */
     private void showInfo(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

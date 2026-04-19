@@ -5,49 +5,45 @@
 package com.aja.model;
 
 /**
- * Estructura estándar que nos devuelve la API. 
- * Envuelve los datos reales (message) y nos dice si la operación fue bien (success).
+ * Forma en la que nos llega la información. 
+ * Trae los datos y nos dice si todo ha salido bien.
  */
 public class ApiResponse<T> {
-    // Los datos reales que devuelve la API (una lista, un objeto, un texto...)
+    // El paquete de datos que nos llega (una lista, un texto, etc.)
     private T message;
     
-    // Indica si la operación fue bien o hubo algún fallo en el servidor
+    // Nos dice si ha funcionado o ha habido un problema
     private boolean success;
 
     /**
-     * Constructor vacío necesario para que Jackson pueda crear el objeto.
+     * Preparación inicial del objeto de respuesta.
      */
     public ApiResponse() {
     }
 
     /**
-     * Obtiene el mensaje o los datos devueltos por la API.
-     * @return El objeto de tipo {@code T} que contiene el mensaje o payload.
+     * Saca la información o el paquete de datos.
      */
     public T getMessage() {
         return message;
     }
 
     /**
-     * Establece el mensaje o los datos de la respuesta.
-     * @param message El objeto de tipo {@code T} a establecer como mensaje.
+     * Guarda los datos recibidos.
      */
     public void setMessage(T message) {
         this.message = message;
     }
 
     /**
-     * Indica si la petición a la API fue exitosa.
-     * @return {@code true} si la petición tuvo éxito, {@code false} en caso de error.
+     * Nos dice si la petición ha funcionado correctamente.
      */
     public boolean isSuccess() {
         return success;
     }
 
     /**
-     * Establece el estado de éxito de la petición.
-     * @param success {@code true} para indicar éxito, {@code false} para indicar error.
+     * Guarda si la operación fue bien o mal.
      */
     public void setSuccess(boolean success) {
         this.success = success;

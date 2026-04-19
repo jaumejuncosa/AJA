@@ -5,25 +5,22 @@ import com.aja.model.ApiResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 
+/**
+ * Herramienta para manejar los grupos o comunidades del foro.
+ */
 public class ForumApiClient extends BaseApiClient {
 
-    public List<ForumDto> getAllForumPosts() throws Exception {
-        return get("/api/topic", new TypeReference<ApiResponse<List<ForumDto>>>() {});
+    /**
+     * Pedimos la lista de todas las comunidades disponibles.
+     */
+    public List<ForumDto> getAllForums() throws Exception {
+        return get("/api/forum", new TypeReference<ApiResponse<List<ForumDto>>>() {});
     }
 
+    /**
+     * Buscamos los datos de una comunidad usando su número.
+     */
     public ForumDto getForumById(Long id) throws Exception {
-        return get("/api/topic/" + id, new TypeReference<ApiResponse<ForumDto>>() {});
-    }
-
-    public String createForumPost(ForumDto post) throws Exception {
-        return post("/api/topic", post, new TypeReference<ApiResponse<String>>() {});
-    }
-
-    public String updateForumPost(ForumDto post) throws Exception {
-        return put("/api/topic", post, new TypeReference<ApiResponse<String>>() {});
-    }
-
-    public String deleteForumPost(Long id) throws Exception {
-        return delete("/api/topic/" + id, new TypeReference<ApiResponse<String>>() {});
+        return get("/api/forum/" + id, new TypeReference<ApiResponse<ForumDto>>() {});
     }
 }

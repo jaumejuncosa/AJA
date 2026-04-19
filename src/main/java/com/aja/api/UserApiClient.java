@@ -12,38 +12,45 @@ import java.util.List;
 public class UserApiClient extends BaseApiClient {
     
     /**
-     * Constructor: Simplemente llamamos al de la clase base.
+     * Preparamos el sistema para trabajar con usuarios.
      */
     public UserApiClient() {
         super();
     }
 
     /**
-     * Pedimos a la API todos los usuarios que hay en la base de datos.
+     * Actualiza el perfil del usuario autenticado actualmente.
+     * Se usa la ruta base /api/user según la documentación para usuarios no administradores.
+     */
+    public Object updateProfile(UserDto user) throws Exception {
+        return put("/api/user", user, new TypeReference<ApiResponse<Object>>() {});
+    }
+
+    /**
+     * Pedimos la lista de todas las personas registradas.
      */
     public List<UserDto> getAllUsers() throws Exception {
         return get("/api/user", new TypeReference<ApiResponse<List<UserDto>>>() {});
     }
 
     /**
-     * Buscamos los detalles de un usuario concreto usando su ID.
+     * Buscamos la ficha de una persona usando su número.
      */
     public UserDto getUserById(Long id) throws Exception {
         return get("/api/user/" + id, new TypeReference<ApiResponse<UserDto>>() {});
     }
 
     /**
-     * Mandamos los datos de un nuevo usuario a la API para registrarlo.
+     * Registramos a una persona nueva con sus datos.
      */
     public Object createUser(UserNewDto user) throws Exception {
-        // Cambiamos a Object para que no de error si la API responde un simple mensaje de texto
+        // Usamos un formato genérico por si la respuesta es corta.
         return post("/api/user", user, new TypeReference<ApiResponse<Object>>() {});
     }
 
     public Object updateUser(UserDto user) throws Exception {
-        // Volvemos a la ruta estándar /api/user. El ID del usuario va dentro 
-        // del objeto UserDto (en el cuerpo del JSON), no en la URL.
-        return put("/api/user", user, new TypeReference<ApiResponse<Object>>() {});
+        // El endpoint correcto para actualizar un usuario específico es /api/user/{id}
+        return put("/api/user/" + user.getId(), user, new TypeReference<ApiResponse<Object>>() {});
     }
 
     public void deleteUser(Long id) throws Exception {
@@ -51,12 +58,16 @@ public class UserApiClient extends BaseApiClient {
     }
 
     /**
-     * Deshabilita un usuario específico por su ID.
-     * Solo para administradores.
+     * Quitamos el permiso de entrada a una persona. Solo lo puede hacer el jefe.
      */
     public Object disableUser(Long id) throws Exception {
-        // La API espera un cuerpo para PUT, aunque esté vacío para esta operación.
-        Map<String, Object> emptyBody = new HashMap<>();
-        return put("/api/user/disable/" + id, emptyBody, new TypeReference<ApiResponse<Object>>() {});
+        return put("/api/user/disable/" + id, null, new TypeReference<ApiResponse<Object>>() {});
+    }
+
+    /**
+     * Habilita a un usuario deshabilitado. Solo por admins.
+     */
+    public Object enableUser(Long id) throws Exception {
+        return put("/api/user/enable/" + id, null, new TypeReference<ApiResponse<Object>>() {});
     }
 }

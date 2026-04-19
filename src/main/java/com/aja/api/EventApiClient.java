@@ -8,21 +8,21 @@ import java.util.List;
 public class EventApiClient extends BaseApiClient {
     
     /**
-     * Constructor: Preparamos el cliente para gestionar eventos.
+     * Preparamos el sistema para manejar las actividades.
      */
     public EventApiClient() {
         super();
     }
 
     /**
-     * Pedimos a la API la lista de eventos programados.
+     * Pedimos la lista de todas las actividades programadas.
      */
     public List<EventDto> getAllEvents() throws Exception {
         return get("/api/events", new TypeReference<ApiResponse<List<EventDto>>>() {});
     }
 
     /**
-     * Registramos un nuevo evento en la base de datos.
+     * Creamos una actividad nueva.
      */
     public EventDto createEvent(EventDto event) throws Exception {
         return post("/api/events", event, new TypeReference<ApiResponse<EventDto>>() {});

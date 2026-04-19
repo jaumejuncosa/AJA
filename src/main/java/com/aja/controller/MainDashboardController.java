@@ -4,13 +4,16 @@ import com.aja.api.UserApiClient;
 import com.aja.api.EventApiClient;
 import com.aja.api.MessageApiClient;
 import com.aja.api.ForumApiClient;
+import com.aja.api.PostApiClient;
 import com.aja.api.TopicApiClient;
 import com.aja.model.UserDto;
 import com.aja.model.UserNewDto;
 import com.aja.model.EventDto;
 import com.aja.model.MessageDto;
-import com.aja.model.ForumDto;
 import com.aja.model.CommentDto;
+import com.aja.model.ForumDto;
+import com.aja.model.PostDto; // Usaremos PostDto en lugar de ForumDto
+import com.aja.model.LoginResponseDto;
 import com.aja.model.TopicDto;
 import com.aja.service.AuthService;
 import com.aja.util.DateUtils;
@@ -52,10 +55,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Node;
 
 /**
- * Controlador del panel principal (dashboard) de la aplicación AJA Desktop.
- * Gestiona la navegación entre las diferentes secciones de la aplicación:
- * usuarios, foro, eventos y mensajes. Coordina la carga de datos desde
- * las APIs y la actualización de las vistas correspondientes.
+ * Controla el panel principal. Organiza las secciones de usuarios, foro, eventos y mensajes.
  */
 public class MainDashboardController {
 
@@ -102,7 +102,7 @@ public class MainDashboardController {
     private Button newMessageButton;
 
     @FXML
-    private VBox usuariosContent;
+    private VBox usuariosContent; // Mantener este VBox
     @FXML
     private VBox foroContent;
     @FXML
@@ -115,7 +115,7 @@ public class MainDashboardController {
     @FXML
     private HBox adminForumActions;
     @FXML
-    private VBox forumThreadView;
+    private VBox forumThreadView; // Mantener este VBox
     @FXML
     private VBox commentsContainer;
     @FXML
@@ -160,10 +160,10 @@ public class MainDashboardController {
     private TableColumn<MessageDto, Boolean> colMessageRead;
 
     @FXML
-    private ListView<ForumDto> forumListView;
+    private ListView<PostDto> forumListView; // Lista de posts central
     
     @FXML
-    private ListView<TopicDto> categoryListView;
+    private ListView<ForumDto> categoryListView; // Sidebar de Comunidades (Forums)
     @FXML
     private Label lblSelectedCategory;
 
@@ -177,11 +177,12 @@ public class MainDashboardController {
     private final MessageApiClient messageApiClient = new MessageApiClient();
     private final ObservableList<MessageDto> mensajes = FXCollections.observableArrayList();
 
+    private final PostApiClient postApiClient = new PostApiClient();
+    private final ObservableList<PostDto> foroPosts = FXCollections.observableArrayList(); // Ahora ObservableList de PostDto
+    
     private final ForumApiClient forumApiClient = new ForumApiClient();
-    private final ObservableList<ForumDto> foroPosts = FXCollections.observableArrayList();
-
     private final TopicApiClient topicApiClient = new TopicApiClient();
-    private final ObservableList<TopicDto> foroTopics = FXCollections.observableArrayList();
+    private final ObservableList<TopicDto> foroTopics = FXCollections.observableArrayList(); // Para uso futuro (subcategorías)
 
     private final AuthService authService = AuthService.getInstance();
 
@@ -189,43 +190,33 @@ public class MainDashboardController {
     private String token;
 
     /**
-     * Este método lo lanza JavaFX al cargar el FXML. Aquí preparamos la UI,
-     * las tablas, las listas y configuramos los estilos de las tarjetas.
+     * Configuración inicial al abrir el panel: Prepara las listas, tablas y colores.
      */
     @FXML
     public void initialize() {
          System.out.println("Inicializando Dashboard...");
          
-        // Mostrar información del usuario actual
-        // Asegurarse de que activeUsersCheckBox no sea nulo antes de usarlo
-        // Si el FXML no lo inicializa, podría ser nulo aquí.
-        // Sin embargo, @FXML inyecta los componentes antes de initialize.
+        // Mostrar información de la persona que ha entrado
         UserDto currentUser = authService.getCurrentUser();
         if (currentUser != null) {
             lblUsername.setText(currentUser.getUsername());
             lblUserRole.setText(currentUser.getRole());
             lblUserEmail.setText(currentUser.getEmail());
-            lblUserRegisterDate.setText(com.aja.util.DateUtils.format(currentUser.getRegisterDate()));
+            lblUserRegisterDate.setText(DateUtils.format(currentUser.getRegisterDate()));
 
-            // Establecer la versión configurable
             lblVersion.setText("AJA Desktop v" + APP_VERSION);
 
-            // Mostrar u ocultar el botón "Usuarios" según el rol
             boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
-            
-            // Permisos Usuarios: Consulta solo ADMIN
+                        
             btnUsuarios.setVisible(isAdmin);
             btnUsuarios.setManaged(isAdmin);
             
-            // Desactivamos el botón de alta de usuarios en el panel por requerimiento
             newUserButton.setVisible(false);
             newUserButton.setManaged(false);
             
-            // Permisos Forum: Registro/Alta solo ADMIN
-            newForumButton.setVisible(isAdmin);
-            newForumButton.setManaged(isAdmin);
+            newForumButton.setVisible(true);
+            newForumButton.setManaged(true);
 
-            // Si no es administrador, enfocar el botón Foro al iniciar
             if (!isAdmin) {
                 btnForo.requestFocus();
             }
@@ -233,10 +224,10 @@ public class MainDashboardController {
 
         menuButtons = List.of(btnUsuarios, btnForo, btnEventos, btnMensajes);
 
-        // En lugar de cargar una pestaña por defecto, mostramos la bienvenida
+        // Al empezar, mostramos el mensaje de bienvenida
         showWelcomeView();
         
-        // Configuramos el filtrado en tiempo real
+        // Preparamos el buscador para que filtre mientras escribimos
         setupUserFilterListeners();
         
         if (usuariosTable != null) {
@@ -247,19 +238,19 @@ public class MainDashboardController {
             colActive.setCellValueFactory(new PropertyValueFactory<>("active"));
             colRegisterDate.setCellValueFactory(new PropertyValueFactory<>("registerDate"));
 
-            // Aplicar el formato dd/MM/yyyy a las celdas de la columna Fecha Registro
+            // Poner la fecha de registro en un formato fácil de leer
             colRegisterDate.setCellFactory(column -> new TableCell<>() {
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
-                    setText(empty || item == null ? null : com.aja.util.DateUtils.format(item));
+                    setText(empty || item == null ? null : DateUtils.format(item));
                 }
             });
 
-            // Importante: La tabla ahora usa la lista filtrada, no la original
+            // La tabla enseña la lista según lo que busquemos
             usuariosTable.setItems(filteredUsuarios);
 
-            // Al hacer doble click sobre un usuario, solicitar detalle por ID.
+            // Si pulsas dos veces sobre una persona, abrimos su ficha.
             usuariosTable.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2) {
                     UserDto selected = usuariosTable.getSelectionModel().getSelectedItem();
@@ -287,7 +278,7 @@ public class MainDashboardController {
 
                         VBox dateBadge = new VBox();
                         dateBadge.getStyleClass().add("event-date-badge");
-                        Label day = new Label(item.getDate().split("-")[2]); // Asumiendo YYYY-MM-DD
+                        Label day = new Label(item.getDate().split("-")[2]); 
                         day.getStyleClass().add("event-date-day");
                         dateBadge.getChildren().add(day);
 
@@ -314,17 +305,20 @@ public class MainDashboardController {
             colMessageRead.setCellValueFactory(new PropertyValueFactory<>("read"));
 
             mensajesTable.setItems(mensajes);
-            //loadMessages();
         }
 
         if (forumListView != null) {
             forumListView.setItems(foroPosts);
             forumListView.getStyleClass().add("forum-list-view");
-            
-            // Definimos cómo se ve cada "tarjeta" del foro
-            forumListView.setCellFactory(lv -> new ListCell<>() {
+            // Placeholder informativo
+            Label placeholder = new Label("No hay mensajes disponibles en esta categoría.");
+            placeholder.getStyleClass().add("content-hint");
+            forumListView.setPlaceholder(placeholder);
+
+            // Preparamos el diseño de cada mensaje del foro
+            forumListView.setCellFactory(lv -> new ListCell<PostDto>() {
                 @Override
-                protected void updateItem(ForumDto item, boolean empty) {
+                protected void updateItem(PostDto item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
                         setGraphic(null);
@@ -332,33 +326,35 @@ public class MainDashboardController {
                     } else {
                         VBox card = new VBox(8);
                         card.getStyleClass().add("forum-card");
+                        // Binding robusto para que la tarjeta use todo el ancho
+                        card.prefWidthProperty().bind(lv.widthProperty().subtract(40));
+                        card.setMinWidth(0);
+                        setText(null);
                         
-                        // Metadata: Estilo Reddit (f/comunidad • u/autor • fecha)
+                        // Información del mensaje: Estilo Reddit (f/comunidad • u/autor • fecha)
+                        // Información del mensaje: u/autor • fecha (Quitamos el f/comunidad de aquí)
                         HBox metaBox = new HBox(5);
                         metaBox.setAlignment(Pos.CENTER_LEFT);
                         
-                        // Mostramos la categoría real del post si existe
-                        String categoryName = item.getCategory() != null ? "f/" + item.getCategory().toLowerCase() : "f/general";
-                        Label community = new Label(categoryName);
-                        community.setStyle("-fx-font-weight: bold; -fx-text-fill: #1e293b;");
+                        Label communityTag = new Label("f/" + item.getCategory());
+                        communityTag.getStyleClass().add("forum-author-tag");
                         
                         String authorName = item.getAuthor() != null ? item.getAuthor() : "anónimo";
-                        String dateStr = item.getDate() != null ? com.aja.util.DateUtils.format(item.getDate()) : "reciente";
+                        String dateStr = item.getDate() != null ? DateUtils.format(item.getDate()) : "reciente";
                         
-                        Label authorInfo = new Label(" • Posteado por u/" + authorName + " • " + dateStr);
+                        Label authorInfo = new Label(" • u/" + authorName + " • " + dateStr);
                         authorInfo.getStyleClass().add("forum-card-meta");
                         
-                        metaBox.getChildren().addAll(community, authorInfo);
+                        metaBox.getChildren().addAll(communityTag, authorInfo);
 
-                        // Título destacado
                         Label title = new Label(item.getTitle());
                         title.getStyleClass().add("forum-card-title");
                         title.setWrapText(true);
                         
-                        // Footer de acciones (Simulado para estética Reddit)
+                        // Parte de abajo con el contador de respuestas
                         HBox actions = new HBox(15);
                         actions.setPadding(new javafx.geometry.Insets(5, 0, 0, 0));
-                        // Conteo real de comentarios
+                        // Contamos cuántas personas han contestado
                         int commentCount = (item.getComments() != null) ? item.getComments().size() : 0;
                         Label comments = new Label("💬 " + commentCount + " Comentarios");
                         Label share = new Label("🔗 Compartir");
@@ -372,11 +368,10 @@ public class MainDashboardController {
                 }
             });
 
-            // Al hacer doble clic en un tema del foro, abrimos el detalle (especialmente para que el admin lo edite)
-            // Al hacer doble clic en un tema del foro, abrimos el detalle
+            // Si pulsas dos veces en un mensaje, lo abrimos para leerlo entero
             forumListView.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2) {
-                    ForumDto selected = forumListView.getSelectionModel().getSelectedItem();
+                    PostDto selected = forumListView.getSelectionModel().getSelectedItem(); 
                     if (selected != null) {
                         showForumThread(selected);
                     }
@@ -384,14 +379,14 @@ public class MainDashboardController {
             });
         }
 
-        // Inicializar la lista de categorías (comunidades)
+        // Preparamos la lista de comunidades de la izquierda
         if (categoryListView != null) {
-            categoryListView.setItems(foroTopics);
+            ObservableList<ForumDto> foroForums = FXCollections.observableArrayList();
+            categoryListView.setItems(foroForums);
             
-            // Personalizamos la celda para mostrar el nombre del Topic
-            categoryListView.setCellFactory(lv -> new ListCell<TopicDto>() {
+            categoryListView.setCellFactory(lv -> new ListCell<ForumDto>() {
                 @Override
-                protected void updateItem(TopicDto item, boolean empty) {
+                protected void updateItem(ForumDto item, boolean empty) {
                     super.updateItem(item, empty);
                     setText(empty || item == null ? null : item.getTitle());
                 }
@@ -400,7 +395,7 @@ public class MainDashboardController {
             categoryListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal != null && lblSelectedCategory != null) {
                     lblSelectedCategory.setText(newVal.getTitle());
-                    // Al cambiar de comunidad, recargamos los posts
+                    // Al cambiar de comunidad, buscamos los mensajes de ese grupo
                     loadForumPosts();
                 }
             });
@@ -408,70 +403,73 @@ public class MainDashboardController {
     }
 
     /**
-     * Cambia la interfaz para mostrar el detalle de un hilo específico.
-     * Oculta la lista general y muestra el contenido del post con sus comentarios.
+     * Enseñamos el mensaje completo con sus respuestas.
      */
-    private void showForumThread(ForumDto postSummary) {
-        if (forumMainContainer == null || forumThreadView == null) return;
-
-        try {
-            // Según tu ForumController: getForum(id) obtiene TODO el contenido de la entidad
-            ForumDto fullPost = forumApiClient.getForumById(postSummary.getId());
-            
-            // Log de depuración del objeto mapeado
-            System.out.println("DEBUG ForumDto Mapeado:");
-            System.out.println(" -> ID: " + fullPost.getId());
-            System.out.println(" -> Content: " + (fullPost.getContent() == null ? "NULL" : "Presente"));
-            System.out.println(" -> Comments: " + (fullPost.getComments() != null ? fullPost.getComments().size() : "NULL"));
-
-            // Alternar visibilidad de los contenedores
-            forumMainContainer.setVisible(false);
-            forumMainContainer.setManaged(false);
-            forumThreadView.setVisible(true);
-            forumThreadView.setManaged(true);
-
-            // Mostrar acciones de ADMIN si corresponde (edit/delete)
-            boolean isAdmin = "ADMIN".equalsIgnoreCase(authService.getCurrentUser().getRole());
-            adminForumActions.setVisible(isAdmin);
-            adminForumActions.setManaged(isAdmin);
-
-            // Cargar datos del post
-            lblThreadTitle.setText(fullPost.getTitle());
-            lblThreadAuthor.setText("u/" + fullPost.getAuthor());
-            lblThreadDate.setText(" • " + (fullPost.getDate() != null ? com.aja.util.DateUtils.format(fullPost.getDate()) : "ahora"));
-            
-            // Cargamos el contenido real del post. 
-            // Si la API devuelve el objeto equivocado (Categoría), estos campos serán nulos.
-            String content = fullPost.getContent();
-            lblThreadBody.setText(content != null && !content.isBlank() ? content : "No hay contenido disponible para este hilo.");
-
-            // Guardamos el ID actual para las acciones de edición/borrado
-            forumThreadView.setUserData(fullPost);
-
-            // Limpiar y cargar comentarios
-            commentsContainer.getChildren().clear();
-            if (fullPost.getComments() != null && !fullPost.getComments().isEmpty()) {
-                fullPost.getComments().forEach(comment -> 
-                    addCommentToView(comment.getContent(), comment.getAuthor(), comment.getDate())
-                );
-            } else {
-                Label noComments = new Label("No se han encontrado comentarios en la respuesta del servidor.");
-                noComments.getStyleClass().add("content-hint");
-                commentsContainer.getChildren().add(noComments);
-            }
-
-        } catch (Exception e) {
-            showError("Error al cargar hilo", "No se pudo obtener el contenido del post: " + e.getMessage());
+    private void showForumThread(PostDto postSummary) { 
+        if (forumMainContainer == null || forumThreadView == null || postSummary == null || postSummary.getId() == null) {
             return;
         }
+
+        // IMPORTANTE: Ejecutar llamada a API fuera del hilo de la UI
+        new Thread(() -> {
+            try {
+                PostDto fullPost = postApiClient.getPostById(postSummary.getId()); 
+                
+                Platform.runLater(() -> {
+                    // Cambiamos lo que se ve en pantalla
+                    forumMainContainer.setVisible(false);
+                    forumMainContainer.setManaged(false);
+                    forumThreadView.setVisible(true);
+                    forumThreadView.setManaged(true);
+
+                    // Si eres admin o propietario del tema, enseñamos boton editar, el boton eliminar solo para admin
+                    boolean isAdmin = authService.getCurrentUser() != null && 
+                    "ADMIN".equalsIgnoreCase(authService.getCurrentUser().getRole());
+                    boolean isOwner = authService.getCurrentUser() != null && 
+                    authService.getCurrentUser().getUsername().equals(fullPost.getAuthor());
+                    adminForumActions.setVisible(isAdmin || isOwner);   
+                    adminForumActions.setManaged(isAdmin || isOwner);
+
+                    lblThreadTitle.setText(fullPost.getTitle());
+                    lblThreadAuthor.setText("u/" + fullPost.getAuthor());
+                    lblThreadDate.setText(" • " + (fullPost.getDate() != null ? DateUtils.format(fullPost.getDate()) : "ahora"));
+                    
+                    String content = fullPost.getContent();
+                    lblThreadBody.setText(content != null && !content.isBlank() ? content : "No hay contenido disponible.");
+
+                    forumThreadView.setUserData(fullPost); 
+
+                    // Limpiar y enseñar las respuestas
+commentsContainer.getChildren().clear();
+try {
+    List<com.aja.model.PostMessageDto> postComments = postApiClient.getCommentsByTopicId(fullPost.getId());
+    if (postComments != null && !postComments.isEmpty()) {
+       postComments.forEach(comment ->
+    addCommentToView(comment.getText(), comment.getAuthor(), comment.getCreationDate(), comment.getId())
+);
+    } else {
+        Label noComments = new Label("No hay comentarios todavía.");
+        noComments.getStyleClass().add("content-hint");
+        commentsContainer.getChildren().add(noComments);
+    }
+} catch (Exception ex) {
+    Label noComments = new Label("No hay comentarios todavía.");
+    noComments.getStyleClass().add("content-hint");
+    commentsContainer.getChildren().add(noComments);
+}
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showError("Error", "No se pudo cargar el hilo: " + e.getMessage()));
+            }
+        }).start();
     }
 
     /**
-     * Abre el diálogo de edición para el hilo que se está visualizando.
+     * Abre el panel para cambiar el mensaje que estamos leyendo.
      */
     @FXML
     private void handleEditCurrentThread() {
-        ForumDto currentPost = (ForumDto) forumThreadView.getUserData();
+        PostDto currentPost = (PostDto) forumThreadView.getUserData(); 
         if (currentPost != null) {
             showForumDetails(currentPost.getId());
         }
@@ -481,22 +479,24 @@ public class MainDashboardController {
      * Ejecuta la eliminación del hilo actual tras confirmación.
      */
     @FXML
-    private void handleDeleteCurrentThread() {
-        ForumDto currentPost = (ForumDto) forumThreadView.getUserData();
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "¿Estás seguro de que quieres eliminar este hilo permanentemente?");
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == javafx.scene.control.ButtonType.OK) {
-                try {
-                    forumApiClient.deleteForumPost(currentPost.getId());
-                    backToForumList();
-                    loadForumPosts();
-                    showInfo("Eliminado", "El hilo ha sido borrado correctamente.");
-                } catch (Exception e) {
-                    showError("Error", "No se pudo eliminar: " + e.getMessage());
-                }
+   private void handleDeleteCurrentThread() {
+    final PostDto currentPost = (PostDto) forumThreadView.getUserData();
+    if (currentPost == null) return;
+    
+    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "¿Estás seguro de que quieres eliminar este hilo permanentemente?");
+    confirm.showAndWait().ifPresent(response -> {
+        if (response == javafx.scene.control.ButtonType.OK) {
+            try {
+                topicApiClient.deleteTopic(currentPost.getId());
+                backToForumList();
+                loadForumPosts();
+                showInfo("Eliminado", "El hilo ha sido borrado correctamente.");
+            } catch (Exception e) {
+                showError("Error", "No se pudo eliminar: " + e.getMessage());
             }
-        });
-    }
+        }
+    });
+}
 
     /**
      * Gestiona el envío de un nuevo comentario.
@@ -506,63 +506,114 @@ public class MainDashboardController {
         String commentText = txtCommentInput.getText();
         if (commentText == null || commentText.isBlank()) return;
 
-        // Recuperamos el post que estamos visualizando actualmente
-        ForumDto currentPost = (ForumDto) forumThreadView.getUserData();
+        PostDto currentPost = (PostDto) forumThreadView.getUserData(); 
         if (currentPost == null) return;
 
-        try {
-            // Creamos el nuevo objeto de comentario
-            CommentDto newComment = new CommentDto();
-            newComment.setContent(commentText);
-            newComment.setAuthor(authService.getCurrentUser().getUsername());
-            // La fecha será asignada por el servidor o formateada al recargar
-            
-            // Añadimos el comentario a la lista local del DTO
-            if (currentPost.getComments() == null) {
-                currentPost.setComments(new java.util.ArrayList<>());
+        btnPostComment.setDisable(true); // Evitar doble clic
+
+        new Thread(() -> {
+            try {
+                // Creamos un nuevo post/comentario con el formato que espera el servidor
+                postApiClient.addComment(commentText, currentPost.getId());
+                //System.out.println("DEBUG - Comentario enviado para topic: " + currentPost.getId());
+
+                Platform.runLater(() -> {
+                    txtCommentInput.clear();
+                    btnPostComment.setDisable(false);
+                    showForumThread(currentPost); // Refresca la vista completa
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    btnPostComment.setDisable(false);
+                    showError("Error", "No se pudo publicar el comentario: " + e.getMessage());
+                });
             }
-            currentPost.getComments().add(newComment);
-
-            // Enviamos la actualización al servidor usando el método editForum (PUT /api/forum)
-            forumApiClient.updateForumPost(currentPost);
-
-            // Limpiamos el campo de texto
-            txtCommentInput.clear();
-
-            // Refrescamos la vista del hilo llamando de nuevo a la API para confirmar los datos
-            showForumThread(currentPost);
-            
-            showInfo("Comentario enviado", "Tu respuesta ha sido publicada correctamente.");
-
-        } catch (Exception e) {
-            showError("Error al comentar", "No se pudo publicar el comentario en el servidor: " + e.getMessage());
-        }
+        }).start();
     }
 
     /**
-     * Crea dinámicamente una tarjeta de comentario y la añade al contenedor.
+     * Crea el diseño de una respuesta y la pone en la lista.
      */
-    private void addCommentToView(String text, String user, String time) {
-        VBox commentBox = new VBox(5);
-        commentBox.getStyleClass().add("comment-card");
+    private void addCommentToView(String text, String user, String time, Long commentId) {
+    VBox commentBox = new VBox(5);
+    commentBox.getStyleClass().add("comment-card");
+    
+    HBox meta = new HBox(5);
+    Label author = new Label(user);
+    author.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #1e293b;");
+    Label date = new Label(" • " + (time != null ? DateUtils.format(time) : "ahora"));
+    date.getStyleClass().add("forum-card-meta");
+    meta.getChildren().addAll(author, date);
+
+    Label content = new Label(text);
+    content.setWrapText(true);
+    content.setStyle("-fx-text-fill: #334155;");
+
+    // Botones de acción solo para propietario o admin
+    UserDto currentUser = authService.getCurrentUser();
+    boolean isAdmin = currentUser != null && "ADMIN".equalsIgnoreCase(currentUser.getRole());
+    boolean isOwner = currentUser != null && currentUser.getUsername().equals(user);
+
+    commentBox.getChildren().addAll(meta, content);
+
+    if (isOwner || isAdmin) {
+        HBox actions = new HBox(10);
         
-        HBox meta = new HBox(5);
-        Label author = new Label(user);
-        author.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #1e293b;");
-        Label date = new Label(" • " + time);
-        date.getStyleClass().add("forum-card-meta");
-        meta.getChildren().addAll(author, date);
+        if (isOwner) {
+            Button btnEdit = new Button("Editar");
+            btnEdit.setStyle("-fx-background-color: transparent; -fx-text-fill: #3b82f6; -fx-cursor: hand; -fx-font-size: 11px;");
+            btnEdit.setOnAction(e -> {
+                javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog(text);
+                dialog.setTitle("Editar comentario");
+                dialog.setHeaderText(null);
+                dialog.setContentText("Nuevo texto:");
+                dialog.showAndWait().ifPresent(newText -> {
+                    if (!newText.isBlank()) {
+                        new Thread(() -> {
+                            try {
+                                postApiClient.editComment(commentId, newText);
+                                PostDto currentPost = (PostDto) forumThreadView.getUserData();
+                                Platform.runLater(() -> showForumThread(currentPost));
+                            } catch (Exception ex) {
+                                Platform.runLater(() -> showError("Error", "No se pudo editar: " + ex.getMessage()));
+                            }
+                        }).start();
+                    }
+                });
+            });
+            actions.getChildren().add(btnEdit);
+        }
 
-        Label content = new Label(text);
-        content.setWrapText(true);
-        content.setStyle("-fx-text-fill: #334155;");
+        if (isOwner || isAdmin) {
+            Button btnDelete = new Button("Borrar");
+            btnDelete.setStyle("-fx-background-color: transparent; -fx-text-fill: #ef4444; -fx-cursor: hand; -fx-font-size: 11px;");
+            btnDelete.setOnAction(e -> {
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "¿Borrar este comentario?");
+                confirm.showAndWait().ifPresent(response -> {
+                    if (response == javafx.scene.control.ButtonType.OK) {
+                        new Thread(() -> {
+                            try {
+                                postApiClient.deleteComment(commentId);
+                                PostDto currentPost = (PostDto) forumThreadView.getUserData();
+                                Platform.runLater(() -> showForumThread(currentPost));
+                            } catch (Exception ex) {
+                                Platform.runLater(() -> showError("Error", "No se pudo borrar: " + ex.getMessage()));
+                            }
+                        }).start();
+                    }
+                });
+            });
+            actions.getChildren().add(btnDelete);
+        }
 
-        commentBox.getChildren().addAll(meta, content);
-        commentsContainer.getChildren().add(commentBox);
+        commentBox.getChildren().add(actions);
     }
 
+    commentsContainer.getChildren().add(commentBox);
+}
+
     /**
-     * Acción para el botón de retroceso que vuelve a la lista de hilos.
+     * Vuelve atrás para ver la lista de todos los mensajes.
      */
     @FXML
     private void backToForumList() {
@@ -573,8 +624,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Limpia la parte derecha y pone el mensaje de bienvenida con el logo.
-     * Esto es lo primero que ve el usuario al entrar.
+     * Limpia el panel y pone el mensaje de bienvenida.
      */
     private void showWelcomeView() {
         contentArea.getChildren().clear();
@@ -583,14 +633,13 @@ public class MainDashboardController {
         welcomeBox.getStyleClass().add("welcome-container");
         welcomeBox.setAlignment(Pos.CENTER);
 
-        // Cargar el logo desde los recursos
         ImageView logoView = new ImageView();
         try {
             java.net.URL logoUrl = getClass().getResource("/images/logo.png");
             if (logoUrl != null) {
                 Image logo = new Image(logoUrl.toExternalForm());
                 logoView.setImage(logo);
-                logoView.setFitWidth(150); // Tamaño sugerido para el logo
+                logoView.setFitWidth(150); 
                 logoView.setPreserveRatio(true);
                 logoView.getStyleClass().add("welcome-logo");
             }
@@ -609,8 +658,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Un "comodín" para cargar archivos FXML externos dentro del StackPane de la derecha.
-     * Muy útil si decidimos separar las secciones en archivos independientes.
+     * Herramienta para cargar diferentes vistas en la parte derecha.
      */
     private <T> T loadView(String fxmlPath) {
         try {
@@ -618,7 +666,6 @@ public class MainDashboardController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent view = loader.load();
             
-            // Asegurar que la vista se expanda en el StackPane
             if (view instanceof javafx.scene.layout.Region) {
                 ((javafx.scene.layout.Region) view).prefWidthProperty().bind(contentArea.widthProperty());
                 ((javafx.scene.layout.Region) view).prefHeightProperty().bind(contentArea.heightProperty());
@@ -634,7 +681,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Cambia la vista a la gestión de usuarios y refresca la tabla.
+     * Enseña la sección de personas y actualiza la tabla.
      */
     @FXML
     private void showUsuarios() {
@@ -646,7 +693,8 @@ public class MainDashboardController {
     }
 
     /**
-     * Cambia la vista al foro dinámico (estilo tarjetas).
+     * Enseña el foro. Primero cargamos los temas (izquierda); 
+     * al seleccionarse uno, se cargarán los mensajes (derecha).
      */
     @FXML
     private void showForo() {
@@ -654,13 +702,12 @@ public class MainDashboardController {
         foroContent.setVisible(true);
         foroContent.setManaged(true);
         contentArea.getChildren().setAll(foroContent);
-        backToForumList(); // Aseguramos que se vea la lista y no un hilo previo
-        loadTopics();
-        loadForumPosts();
+        backToForumList(); 
+        loadTopics(); 
     }
 
     /**
-     * Cambia la vista a la línea de tiempo de eventos.
+     * Enseña la lista de actividades programadas.
      */
     @FXML
     private void showEventos() {
@@ -672,7 +719,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Cambia la vista a la bandeja de mensajes.
+     * Enseña la bandeja de mensajes recibidos.
      */
     @FXML
     private void showMensajes() {
@@ -684,8 +731,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Cierra la sesión en el servicio y nos devuelve a la pantalla de login
-     * ajustando de nuevo el tamaño de la ventana.
+     * Sale del programa y vuelve a la pantalla de entrada.
      */
    @FXML
     private void handleLogout(ActionEvent event) {
@@ -693,19 +739,18 @@ public class MainDashboardController {
         System.out.println("Ejecutando logout seguro...");
         com.aja.service.AuthService.getInstance().logout();
 
-        // 1. Cargar el FXML (Ruta que ya sabemos que funciona)
+        // 1. Cargamos la vista de entrada
         java.net.URL loginUrl = getClass().getClassLoader().getResource("login.fxml");
         if (loginUrl == null) loginUrl = getClass().getClassLoader().getResource("views/login.fxml");
 
         FXMLLoader loader = new FXMLLoader(loginUrl);
         Parent root = loader.load();
         
-        // 2. Preparar la escena
+        // 2. Preparamos la ventana
         Scene scene = new Scene(root, 420, 440);
         
-        // 3. INTENTO DE CSS (Ruta corregida a login.css)
+        // 3. Aplicamos los colores
         try {
-            // Probamos en la carpeta /styles/ si ahí es donde lo tienes según tu imagen
             java.net.URL cssUrl = getClass().getResource("/styles/login.css");
             
             if (cssUrl != null) {
@@ -718,14 +763,13 @@ public class MainDashboardController {
             System.err.println("Error al aplicar estilos: " + e.getMessage());
         }
 
-        // 4. Cambiar la ventana
+        // 4. Cambiamos lo que vemos
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         
-        stage.setMaximized(false); // Quitar el maximizado
-        stage.setResizable(false); // Volver a bloquear el tamaño
+        stage.setMaximized(false); 
+        stage.setResizable(false); 
         stage.setScene(scene);
         
-        // Sincronizamos con el tamaño exacto de App.java
         stage.sizeToScene();
         
         stage.centerOnScreen();
@@ -740,37 +784,32 @@ public class MainDashboardController {
 }
 
     /**
-     * Configura los listeners para el campo de búsqueda y el checkbox de usuarios activos.
+     * Prepara el buscador para que filtre mientras escribimos.
      */
     private void setupUserFilterListeners() {
         if (searchUserField != null && activeUsersCheckBox != null) {
             searchUserField.textProperty().addListener((observable, oldValue, newValue) -> updateUsersFilter());
             activeUsersCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> updateUsersFilter());
-            // Aplicar el filtro inicial al cargar
             updateUsersFilter();
         }
     }
 
     /**
-     * Actualiza el predicado de la lista filtrada de usuarios basándose en el texto de búsqueda
-     * y el estado del checkbox de usuarios activos.
+     * Busca a las personas por nombre o correo según lo que hayamos escrito o marcado.
      */
     private void updateUsersFilter() {
         filteredUsuarios.setPredicate(user -> {
-            // 1. Filtrar por estado activo si el checkbox está marcado
             if (activeUsersCheckBox.isSelected() && !user.isActive()) {
-                return false; // Si el checkbox está marcado, solo mostramos usuarios activos
+                return false; 
             }
 
-            // 2. Filtrar por texto de búsqueda
             String searchText = searchUserField.getText();
             if (searchText == null || searchText.isBlank()) {
-                return true; // Si no hay texto de búsqueda, el filtro del checkbox es suficiente
+                return true; 
             }
 
             String lowerCaseFilter = searchText.toLowerCase().trim();
 
-            // Comprobamos si el nombre de usuario o el email contienen el texto de búsqueda
             if (user.getUsername() != null && user.getUsername().toLowerCase().contains(lowerCaseFilter)) {
                 return true;
             }
@@ -778,13 +817,12 @@ public class MainDashboardController {
                 return true;
             }
 
-            return false; // No hay coincidencia ni por búsqueda ni por estado activo
+            return false; 
         });
     }
 
     /**
-     * Maneja la acción del checkbox "Solo usuarios activos".
-     * Simplemente llama a updateUsersFilter para aplicar el nuevo filtro.
+     * Qué hacer cuando marcamos el botón de "Solo personas activas".
      */
     @FXML
     private void handleActiveUsersFilter() {
@@ -792,7 +830,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Llama a la API para traer los usuarios y actualiza la tabla en el hilo de la UI.
+     * Pide la lista de personas al servidor y la enseña en la tabla.
      */
     private void loadUsers() {
         try {
@@ -814,13 +852,16 @@ public class MainDashboardController {
     }
 
     /**
-     * Esta es la parte de CONSULTA y MODIFICACIÓN para el Administrador.
-     * Al hacer doble clic en la tabla, abrimos un panel para editar al usuario seleccionado.
+     * Abre una ficha para ver o cambiar los datos de una persona (solo para el jefe).
      */
     private void showUserDetails(Long userId) {
         try {
-            // Traemos los datos frescos del usuario desde la API
+            // Buscamos los datos actuales de la persona
             final UserDto user = userApiClient.getUserById(userId);
+            
+            // Comprobamos si el administrador se está viendo a sí mismo
+            UserDto currentUser = authService.getCurrentUser();
+            boolean isSelf = currentUser != null && currentUser.getId().equals(user.getId());
 
             Stage dialog = new Stage();
             dialog.initModality(Modality.APPLICATION_MODAL);
@@ -832,7 +873,6 @@ public class MainDashboardController {
             layout.getStyleClass().add("content-pane");
             layout.setPrefWidth(420);
 
-            // Cabecera estilizada
             VBox header = new VBox(5);
             Label titleLabel = new Label("Gestión de Usuario");
             titleLabel.getStyleClass().add("content-page-title");
@@ -840,15 +880,13 @@ public class MainDashboardController {
             subtitleLabel.getStyleClass().add("content-page-subtitle");
             header.getChildren().addAll(titleLabel, subtitleLabel);
 
-            // Información destacada
             VBox userInfo = new VBox(8);
             Label nameLabel = new Label(user.getUsername());
             nameLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1e293b;");
-            Label idLabel = new Label("ID: " + user.getId() + " • Registro: " + com.aja.util.DateUtils.format(user.getRegisterDate()));
+            Label idLabel = new Label("ID: " + user.getId() + " • Registro: " + DateUtils.format(user.getRegisterDate()));
             idLabel.getStyleClass().add("content-hint");
             userInfo.getChildren().addAll(nameLabel, idLabel);
 
-            // Formulario
             VBox form = new VBox(15);
 
             VBox emailGroup = new VBox(5);
@@ -867,6 +905,10 @@ public class MainDashboardController {
             roleCombo.setMaxWidth(Double.MAX_VALUE);
             roleCombo.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-radius: 8;");
             roleGroup.getChildren().addAll(roleTitle, roleCombo);
+            
+            // Ocultamos la opción de cambiar rol si es su propia cuenta
+            roleGroup.setVisible(!isSelf);
+            roleGroup.setManaged(!isSelf);
 
             VBox passGroup = new VBox(5);
             Label passTitle = new Label("CONTRASEÑA (Para confirmar o cambiar)");
@@ -880,6 +922,10 @@ public class MainDashboardController {
             activeCheck.setSelected(user.isActive());
             activeCheck.setStyle("-fx-font-weight: 600; -fx-text-fill: #1e293b;");
             
+            // Un administrador no debe poder desactivarse a sí mismo desde aquí
+            activeCheck.setVisible(!isSelf);
+            activeCheck.setManaged(!isSelf);
+            
             form.getChildren().addAll(emailGroup, roleGroup, passGroup, activeCheck);
 
             Button btnSave = new Button("Guardar Cambios");
@@ -888,10 +934,16 @@ public class MainDashboardController {
             btnSave.setPrefHeight(40);
             
             Button btnDisable = new Button("Deshabilitar Acceso");
+            // Ocultar botón de deshabilitar para cuenta propia
+            btnDisable.setVisible(!isSelf);
+            btnDisable.setManaged(!isSelf);
             btnDisable.setStyle("-fx-background-color: transparent; -fx-text-fill: #f59e0b; -fx-border-color: #f59e0b; -fx-border-radius: 8; -fx-cursor: hand; -fx-font-weight: 600;");
             btnDisable.setMaxWidth(Double.MAX_VALUE);
             
             Button btnDelete = new Button("Eliminar Usuario");
+            // Ocultar botón de eliminar para cuenta propia
+            btnDelete.setVisible(!isSelf);
+            btnDelete.setManaged(!isSelf);
             btnDelete.setStyle("-fx-background-color: transparent; -fx-text-fill: #ef4444; -fx-border-color: #ef4444; -fx-border-radius: 8; -fx-cursor: hand; -fx-font-weight: 600;");
             btnDelete.setMaxWidth(Double.MAX_VALUE);
 
@@ -901,49 +953,73 @@ public class MainDashboardController {
                 try {
                     user.setEmail(emailField.getText());
                     user.setRole(roleCombo.getValue());
-                    user.setActive(activeCheck.isSelected()); // Usamos el setter correcto
-                    user.setPassword(passField.getText()); // Mandamos la pass para que el PUT no falle
+                    user.setActive(activeCheck.isSelected());
                     
+                    // El registerDate suele ser inmutable en el backend. 
+                    // Lo ponemos a null para que BaseApiClient (con NON_NULL) no lo envíe
+                    // y así evitar conflictos de seguridad/403.
+                    user.setRegisterDate(null); 
+                    
+                    String newPass = passField.getText();
+                    if (newPass != null && !newPass.isBlank()) {
+                        user.setPassword(newPass);
+                    } else {
+                        user.setPassword(null); // Evitamos enviar una cadena vacía al servidor
+                    }
+                    
+                    // USUARIO MODIFICACIÓN -> UserEntity entero
                     userApiClient.updateUser(user);
-                    loadUsers(); // Refrescamos la tabla principal
+                    loadUsers(); 
                     dialog.close();
                     showInfo("Actualizado", "Los datos del usuario se han guardado correctamente.");
                 } catch (Exception ex) {
-                    ex.printStackTrace();
                     showError("Error al actualizar", "No se han guardado los cambios: " + ex.getMessage());
                 }
             });
 
-            // Acción para deshabilitar al usuario (endpoint disableUser)
+            // Lógica de Toggle: El botón cambia según el estado actual del usuario
+            boolean isCurrentlyActive = Boolean.TRUE.equals(user.isActive());
+            // Lógica de Toggle: El botón cambia visualmente según el estado actual
+            boolean activeStatus = Boolean.TRUE.equals(user.isActive());
+            btnDisable.setText(activeStatus ? "Desactivar Usuario" : "Activar Usuario");
+            btnDisable.setStyle(activeStatus ?
+                "-fx-background-color: transparent; -fx-text-fill: #f59e0b; -fx-border-color: #f59e0b; -fx-border-radius: 8;" : 
+                "-fx-background-color: transparent; -fx-text-fill: #10b981; -fx-border-color: #10b981; -fx-border-radius: 8;");
+
             btnDisable.setOnAction(e -> {
-                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "¿Quieres revocar el acceso a este usuario?");
-                confirm.setTitle("Confirmar Deshabilitar");
-                confirm.setHeaderText(null);
-                confirm.showAndWait().ifPresent(response -> {
+                String accion = Boolean.TRUE.equals(user.isActive()) ? "desactivar" : "activar";
+                Alert confirmToggle = new Alert(Alert.AlertType.CONFIRMATION, "¿Quieres " + accion + " a este usuario?");
+                confirmToggle.showAndWait().ifPresent(response -> {
                     if (response == javafx.scene.control.ButtonType.OK) {
                         try {
-                            userApiClient.disableUser(user.getId());
+                            // DESHABILITAR/HABILITAR -> ADMINISTRADOR (Endpoints específicos)
+                            if (Boolean.TRUE.equals(user.isActive())) {
+                                userApiClient.disableUser(user.getId());
+                            } else {
+                                userApiClient.enableUser(user.getId());
+                            }
+                            
                             loadUsers();
                             dialog.close();
-                            showInfo("Éxito", "El usuario ha sido deshabilitado correctamente.");
+                            showInfo("Éxito", "El estado del usuario ha sido actualizado.");
                         } catch (Exception ex) {
-                            showError("Error", "No se pudo deshabilitar: " + ex.getMessage());
+                            showError("Error de Permisos (403)", "No puedes cambiar el estado de este usuario: " + ex.getMessage());
                         }
                     }
                 });
             });
 
-            // El Admin puede dar de BAJA a otros
             btnDelete.setOnAction(e -> {
-                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "¿Estás seguro de que quieres borrar a este usuario?");
-                confirm.showAndWait().ifPresent(response -> {
+                Alert confirmDelete = new Alert(Alert.AlertType.CONFIRMATION, "¿Borrar permanentemente a este usuario?");
+                confirmDelete.showAndWait().ifPresent(response -> {
                     if (response == javafx.scene.control.ButtonType.OK) {
                         try {
                             userApiClient.deleteUser(user.getId());
                             loadUsers();
                             dialog.close();
+                            showInfo("Eliminado", "Usuario borrado correctamente.");
                         } catch (Exception ex) {
-                            showError("Error", "No se pudo eliminar al usuario.");
+                            showError("Error", "No se pudo eliminar al usuario: " + ex.getMessage());
                         }
                     }
                 });
@@ -960,7 +1036,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Actualiza la lista de eventos desde el servidor.
+     * Actualiza la lista de actividades desde internet.
      */
     private void loadEvents() {
         try {
@@ -972,7 +1048,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Actualiza la bandeja de entrada de mensajes.
+     * Actualiza la bandeja de mensajes.
      */
     private void loadMessages() {
         try {
@@ -984,56 +1060,68 @@ public class MainDashboardController {
     }
 
     /**
-     * Carga las categorías (Topics) desde /api/topic para la barra lateral.
+     * Carga los temas del foro para la barra lateral.
      */
     private void loadTopics() {
-        try {
-            List<TopicDto> list = topicApiClient.getAllTopics();
-            Platform.runLater(() -> {
-                foroTopics.clear();
-                foroTopics.add(new TopicDto(0L, "Todos los temas")); // Opción por defecto
-                if (list != null) foroTopics.addAll(list);
-                categoryListView.getSelectionModel().selectFirst();
-            });
-        } catch (Exception e) {
-            System.err.println("Error al cargar categorías: " + e.getMessage());
-        }
+        new Thread(() -> {
+            try {
+                List<ForumDto> list = forumApiClient.getAllForums();
+                Platform.runLater(() -> {
+                    categoryListView.getItems().clear();
+                    categoryListView.getItems().add(new ForumDto(0L, "Todas las comunidades"));
+                    if (list != null) categoryListView.getItems().addAll(list);
+                    categoryListView.getSelectionModel().selectFirst();
+                });
+            } catch (Exception e) {
+                System.err.println("Error al cargar categorías: " + e.getMessage());
+            }
+        }).start();
     }
 
     /**
-     * Actualiza los temas del foro.
+     * Actualiza los mensajes del foro.
      */
     private void loadForumPosts() {
-        try {
-            TopicDto selectedTopic = categoryListView.getSelectionModel().getSelectedItem();
-            List<ForumDto> list = forumApiClient.getAllForumPosts();
-            Platform.runLater(() -> {
-                foroPosts.clear();
-                if (list != null) {
-                    // Filtramos los posts (de /api/topic) según la categoría seleccionada (de /api/forum)
-                    if (selectedTopic != null && selectedTopic.getId() != 0L) {
-                        list.stream()
-                            .filter(p -> selectedTopic.getId().equals(p.getForumId()))
-                            .forEach(foroPosts::add);
-                    } else {
-                        foroPosts.addAll(list);
+        new Thread(() -> {
+            try {
+                List<PostDto> list = postApiClient.getAllPosts(); 
+                Platform.runLater(() -> {
+                    // Corregido: La lista lateral contiene ForumDto
+                    ForumDto currentSelection = categoryListView.getSelectionModel().getSelectedItem();
+                    
+                    foroPosts.clear();
+                    if (list != null) {
+                        if (currentSelection == null || currentSelection.getId() == 0L) {
+                            // Opción "Todas las comunidades"
+                            foroPosts.addAll(list);
+                        } else {
+                            Long sid = currentSelection.getId();
+                            list.stream()
+                                .filter(p -> {
+                                    Long tid = p.getTopicId();
+                                    // Si es General, incluimos nulos o -1
+                                    if (sid == -1L) return tid == null || tid == -1L;
+                                    return sid.equals(tid);
+                                })
+                                .forEach(foroPosts::add);
+                        }
                     }
-                }
-            });
-        } catch (Exception e) {
-            Platform.runLater(() -> showError("Error de Foro", "No se pudieron cargar los temas: " + e.getMessage()));
-        }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showError("Error de Foro", "No se pudieron cargar los mensajes: " + e.getMessage()));
+            }
+        }).start();
     }
 
     /**
-     * Abre el diálogo para ver, editar o borrar un tema del foro.
-     * Solo los administradores podrán ver los botones de acción.
+     * Abre un panel para ver, cambiar o borrar un mensaje del foro (solo para el jefe).
      */
     private void showForumDetails(Long forumId) {
         try {
-            ForumDto post = forumApiClient.getForumById(forumId);
+            PostDto post = postApiClient.getPostById(forumId); 
             UserDto currentUser = authService.getCurrentUser();
             boolean isAdmin = currentUser != null && "ADMIN".equalsIgnoreCase(currentUser.getRole());
+            boolean isOwner = currentUser != null && currentUser.getUsername().equals(post.getAuthor());
 
             Stage dialog = new Stage();
             dialog.initModality(Modality.APPLICATION_MODAL);
@@ -1056,19 +1144,19 @@ public class MainDashboardController {
             titleHint.getStyleClass().add("user-label");
             TextField titleField = new TextField(post.getTitle());
             titleField.getStyleClass().add("search-field");
-            titleField.setEditable(isAdmin); // Solo edita el admin
+            titleField.setEditable(isAdmin || isOwner);
 
             Label authorHint = new Label("AUTOR");
             authorHint.getStyleClass().add("user-label");
             TextField authorField = new TextField(post.getAuthor());
             authorField.getStyleClass().add("search-field");
-            authorField.setEditable(isAdmin);
+            authorField.setEditable(false); // El autor no se puede cambiar
 
             form.getChildren().addAll(titleHint, titleField, authorHint, authorField);
 
             layout.getChildren().addAll(header, new Separator(), form);
 
-            if (isAdmin) {
+            if (isAdmin || isOwner) {
                 Button btnUpdate = new Button("Guardar Cambios");
                 btnUpdate.getStyleClass().add("primary-action-button");
                 btnUpdate.setMaxWidth(Double.MAX_VALUE);
@@ -1079,11 +1167,11 @@ public class MainDashboardController {
 
                 btnUpdate.setOnAction(e -> {
                     try {
-                        post.setTitle(titleField.getText());
-                        post.setAuthor(authorField.getText());
-                        forumApiClient.updateForumPost(post);
+                        Long currentForum = post.getTopicId();
+                        topicApiClient.editTopic(post.getId(), titleField.getText(), currentForum, currentForum);
                         loadForumPosts();
                         dialog.close();
+                        backToForumList();
                         showInfo("Éxito", "Tema actualizado correctamente.");
                     } catch (Exception ex) {
                         showError("Error", "No se pudo actualizar: " + ex.getMessage());
@@ -1095,9 +1183,10 @@ public class MainDashboardController {
                     confirm.showAndWait().ifPresent(response -> {
                         if (response == javafx.scene.control.ButtonType.OK) {
                             try {
-                                forumApiClient.deleteForumPost(post.getId());
+                                topicApiClient.deleteTopic(post.getId());
                                 loadForumPosts();
                                 dialog.close();
+                                backToForumList();
                             } catch (Exception ex) {
                                 showError("Error", "No se pudo borrar el tema.");
                             }
@@ -1124,8 +1213,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Gestiona el estilo visual de los botones del menú lateral para que 
-     * sepamos siempre en qué sección estamos.
+     * Cambia el color del botón del menú para saber siempre en qué sección estamos.
      */
     private void selectMenuItem(int index) {
         for (int i = 0; i < menuButtons.size(); i++) {
@@ -1139,9 +1227,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Esta es la parte de MI PERFIL. 
-     * Aquí el usuario (sea User o Admin) puede MODIFICAR su email o darse de BAJA.
-     * Por seguridad, pedimos la contraseña para confirmar.
+     * Mi Perfil: Permite cambiar tu correo o borrar tu cuenta tras pedirte la clave.
      */
     @FXML
     private void handleEditProfile() {
@@ -1174,19 +1260,31 @@ public class MainDashboardController {
         Label roleLabel = new Label(user.getRole());
         roleLabel.getStyleClass().add("user-role"); // Reutilizamos el estilo de etiqueta de rol
         
-        Label dateLabel = new Label("Miembro desde: " + com.aja.util.DateUtils.format(user.getRegisterDate()));
+        Label dateLabel = new Label("Miembro desde: " + DateUtils.format(user.getRegisterDate()));
         dateLabel.getStyleClass().add("content-hint");
         userInfo.getChildren().addAll(nameLabel, roleLabel, dateLabel);
 
         // Formulario de edición
         VBox form = new VBox(15);
         
+        VBox userGroup = new VBox(5);
+        Label userTitle = new Label("NOMBRE DE USUARIO");
+        userTitle.getStyleClass().add("user-label");
+        TextField usernameField = new TextField(user.getUsername());
+        usernameField.setEditable(true);
+        usernameField.setDisable(false);
+        usernameField.setFocusTraversable(true);
+        // Eliminamos -fx-opacity para asegurar que el campo no parezca deshabilitado visualmente
+        usernameField.setStyle("-fx-padding: 8 12; -fx-background-color: #ffffff; -fx-border-color: #3b82f6; " +
+                             "-fx-border-radius: 8; -fx-text-fill: #1e293b; -fx-border-width: 1px;");
+        userGroup.getChildren().addAll(userTitle, usernameField);
+
         VBox emailGroup = new VBox(5);
         Label emailTitle = new Label("CORREO ELECTRÓNICO");
         emailTitle.getStyleClass().add("user-label");
         TextField emailField = new TextField(user.getEmail());
         emailField.getStyleClass().add("search-field");
-        emailField.setStyle("-fx-padding: 8 12 8 12;"); // Ajustamos padding para que no herede el hueco de la lupa
+        emailField.setStyle("-fx-padding: 8 12 8 12;"); 
         emailGroup.getChildren().addAll(emailTitle, emailField);
 
         VBox passGroup = new VBox(5);
@@ -1198,7 +1296,7 @@ public class MainDashboardController {
         confirmPassField.setStyle("-fx-padding: 8 12 8 12;");
         passGroup.getChildren().addAll(passTitle, confirmPassField);
         
-        form.getChildren().addAll(emailGroup, passGroup);
+        form.getChildren().addAll(userGroup, emailGroup, passGroup);
 
         Button btnUpdate = new Button("Actualizar Información");
         btnUpdate.getStyleClass().add("primary-action-button");
@@ -1211,7 +1309,7 @@ public class MainDashboardController {
 
         layout.getChildren().addAll(header, new Separator(), userInfo, form, btnUpdate, new Separator(), btnBaja);
 
-        // MODIFICACIÓN propia
+        // Acción para actualizar datos
         btnUpdate.setOnAction(e -> {
             String pass = confirmPassField.getText();
             if (pass == null || pass.isBlank()) {
@@ -1220,28 +1318,56 @@ public class MainDashboardController {
             }
 
             try {
-                // Validamos que la contraseña sea correcta antes de nada
-                if (!authService.authenticate(user.getUsername(), pass).isSuccess()) {
-                    showError("Error", "Contraseña incorrecta.");
+                // 1. Re-autenticamos para validar la identidad
+                LoginResponseDto auth = authService.authenticate(authService.getCurrentUser().getUsername(), pass);
+                if (!auth.isSuccess()) {
+                    showError("Error", "Contraseña incorrecta para confirmar cambios.");
                     return;
                 }
 
-                // Actualizamos los tokens de todos los clientes con el nuevo token generado
-                setToken(authService.getToken());
+                
+                // 3. Preparamos la petición de actualización "limpia".
+                // NO enviamos role, active ni registerDate. Como usuario normal (USER), 
+                // el servidor suele denegar (403) peticiones que incluyan campos de administración,
+                // incluso si los valores no cambian.
+                UserDto sessionUser = authService.getCurrentUser();
+                String oldUsername = sessionUser.getUsername();
+                
+                UserDto updateRequest = new UserDto();
+                updateRequest.setId(sessionUser.getId());
+                updateRequest.setUsername(usernameField.getText().trim());
+                updateRequest.setEmail(emailField.getText());
+                updateRequest.setRole(sessionUser.getRole());
+                updateRequest.setActive(sessionUser.isActive());
+                updateRequest.setRegisterDate(sessionUser.getRegisterDate());
+                updateRequest.setPassword(confirmPassField.getText());
 
-                user.setEmail(emailField.getText());
-                user.setPassword(pass); // Seteamos la contraseña en el objeto antes de enviarlo
-                userApiClient.updateUser(user);
-                lblUserEmail.setText(user.getEmail());
+                // IMPORTANTE: Usamos updateUser para que la URL incluya el ID (/api/user/{id})
+                // Esto permite al servidor validar la propiedad del recurso y evitar el 403.
+                userApiClient.updateProfile(updateRequest);
+                
+                // Si el nombre de usuario ha cambiado, cerramos sesión por seguridad
+                if (!oldUsername.equals(updateRequest.getUsername())) {
+                    dialog.close();
+                    showInfo("Perfil actualizado", "Has cambiado tu nombre de usuario. Por seguridad, debes iniciar sesión de nuevo.");
+                    handleLogout(e);
+                    return;
+                }
+
+                // 4. Sincronizamos los cambios en la sesión local y actualizamos el Dashboard
+                sessionUser.setUsername(updateRequest.getUsername());
+                sessionUser.setEmail(updateRequest.getEmail());
+                
+                lblUsername.setText(sessionUser.getUsername());
+                lblUserEmail.setText(sessionUser.getEmail());
                 dialog.close();
                 showInfo("Perfil actualizado", "Los cambios se han guardado.");
             } catch (Exception ex) {
-                ex.printStackTrace();
-                showError("Error", "No se han guardado los cambios: " + ex.getMessage());
+                showError("Error de Actualización", "No se pudieron guardar los cambios: " + ex.getMessage());
             }
         });
 
-        // BAJA propia
+        // Darse de baja uno mismo
         btnBaja.setOnAction(e -> {
             String pass = confirmPassField.getText();
             if (pass == null || pass.isBlank()) {
@@ -1274,7 +1400,7 @@ public class MainDashboardController {
         dialog.show();
     }
     /**
-     * Abre un diálogo modal para crear un nuevo usuario.
+     * Abre una ventana para crear una persona nueva.
      */
     @FXML
     private void handleNewUser() {
@@ -1358,7 +1484,7 @@ public class MainDashboardController {
                 newUser.setEmail(email);
 
                 userApiClient.createUser(newUser);
-                loadUsers(); // Refrescar tabla
+                loadUsers(); 
                 dialog.close();
 
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
@@ -1381,7 +1507,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Abre un diálogo modal para crear un nuevo tema en el foro.
+     * Abre una ventana para escribir un tema nuevo en el foro.
      */
     @FXML
     private void handleNewForum() {
@@ -1411,6 +1537,13 @@ public class MainDashboardController {
         authorField.setPromptText("Autor (username)");
         authorField.getStyleClass().add("search-field");
         authorField.setStyle("-fx-padding: 8 12;");
+        if (authService.getCurrentUser() != null) {
+            authorField.setText(authService.getCurrentUser().getUsername());
+        }
+
+        TextArea contentAreaField = new TextArea();
+        contentAreaField.setPromptText("Escribe aquí el contenido de tu tema...");
+        contentAreaField.setPrefHeight(100);
 
         Button okButton = new Button("Crear Tema");
         okButton.getStyleClass().add("primary-action-button");
@@ -1432,8 +1565,13 @@ public class MainDashboardController {
         Label authorLabelGroup = new Label("AUTOR");
         authorLabelGroup.getStyleClass().add("user-label");
         authorGroup.getChildren().addAll(authorLabelGroup, authorField);
+        
+        VBox contentGroup = new VBox(5);
+        Label contentLabelGroup = new Label("CONTENIDO");
+        contentLabelGroup.getStyleClass().add("user-label");
+        contentGroup.getChildren().addAll(contentLabelGroup, contentAreaField);
 
-        form.getChildren().addAll(titleGroup, authorGroup);
+        form.getChildren().addAll(titleGroup, authorGroup, contentGroup);
 
         layout.getChildren().addAll(header, new Separator(), form, okButton, cancelButton);
 
@@ -1441,19 +1579,18 @@ public class MainDashboardController {
             try {
                 String title = titleField.getText().trim();
                 String author = authorField.getText().trim();
+                String content = contentAreaField.getText().trim();
 
-                if (title.isEmpty() || author.isEmpty()) {
+                if (title.isEmpty() || author.isEmpty() || content.isEmpty()) {
                     showError("Campos requeridos", "Todos los campos son obligatorios.");
                     return;
                 }
 
-                ForumDto newPost = new ForumDto();
-                newPost.setTitle(title);
-                newPost.setAuthor(author);
-                // Date se puede omitir, el servidor lo asigna
+                ForumDto selectedForum = categoryListView.getSelectionModel().getSelectedItem();
+                Long forumId = (selectedForum != null && selectedForum.getId() > 0) ? selectedForum.getId() : null;
+                topicApiClient.addTopic(title, forumId);
 
-                forumApiClient.createForumPost(newPost);
-                loadForumPosts(); // Refrescar tabla
+                loadForumPosts(); 
                 dialog.close();
 
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
@@ -1476,7 +1613,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Abre un diálogo modal para crear un nuevo evento.
+     * Abre una ventana para crear una actividad nueva.
      */
     @FXML
     private void handleNewEvent() {
@@ -1571,7 +1708,7 @@ public class MainDashboardController {
                 newEvent.setLocation(location);
 
                 eventApiClient.createEvent(newEvent);
-                loadEvents(); // Refrescar tabla
+                loadEvents(); 
                 dialog.close();
 
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
@@ -1594,7 +1731,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Abre un diálogo modal para mandar un nuevo mensaje.
+     * Abre una ventana para mandar un mensaje a alguien.
      */
     @FXML
     private void handleNewMessage() {
@@ -1680,10 +1817,9 @@ public class MainDashboardController {
                 newMessage.setReceiver(receiver);
                 newMessage.setContent(content);
                 newMessage.setRead(read);
-                // Date se puede omitir, el servidor lo asigna
 
                 messageApiClient.createMessage(newMessage);
-                loadMessages(); // Refrescar tabla
+                loadMessages(); 
                 dialog.close();
 
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
@@ -1706,7 +1842,7 @@ public class MainDashboardController {
     }
 
     /**
-     * Método de utilidad para sacar alertas de error rápidas.
+     * Aviso rápido si ocurre algún error.
      */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -1717,7 +1853,7 @@ public class MainDashboardController {
     }
     
     /**
-     * Alerta rápida para mensajes de información.
+     * Aviso rápido para dar noticias positivas.
      */
     private void showInfo(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -1728,17 +1864,17 @@ public class MainDashboardController {
     }
     
     /**
-     * Guardamos el token en el controlador y se lo pasamos a todos los clientes API
-     * para que puedan funcionar.
+     * Guarda la llave de seguridad en todos los sitios donde se necesite.
      */
     public void setToken(String token) {
         this.token = token;
 
-        // Pasar token a los clientes de API
+        // Repartir la llave a todas las herramientas de conexión
         userApiClient.setToken(token);
         eventApiClient.setToken(token);
         messageApiClient.setToken(token);
-        forumApiClient.setToken(token);
+        postApiClient.setToken(token);
         topicApiClient.setToken(token);
+        forumApiClient.setToken(token);
     }
 }

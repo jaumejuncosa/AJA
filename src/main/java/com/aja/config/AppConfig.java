@@ -6,22 +6,22 @@ import java.util.Properties;
 
 
 public final class AppConfig {
-    // Nombre del archivo donde guardamos las rutas
+    // Nombre del archivo de ajustes
     private static final String CONFIG_FILE = "/config.properties";
     
-    // Si el archivo no existe, usamos esta URL por defecto
+    // Si no hay ajustes, usamos esta dirección por defecto
     private static final String DEFAULT_BASE_URL = "http://localhost:8080";
     private static final String API_BASE_URL_KEY = "api.baseUrl";
 
-    // Propiedades cargadas en memoria    
+    // Ajustes guardados en la memoria
     private static final Properties properties = loadProperties();
 
     private AppConfig() {
-        // No instanciable
+        // No se puede crear un objeto de esta clase
     }
 
     /**
-     * Leemos el archivo properties de los recursos del proyecto.
+     * Leemos el archivo de ajustes guardado en el programa.
      */
     private static Properties loadProperties() {
         Properties props = new Properties();
@@ -33,13 +33,12 @@ public final class AppConfig {
             }
         } catch (IOException e) {
             System.err.println("Error cargando configuración: " + e.getMessage());
-            // Si no se puede leer la configuración, se usa el valor por defecto.
         }
         return props;
     }
 
     /**
-     * Devuelve la URL de la API (ej: http://localhost:8080).
+     * Nos da la dirección de la web donde están los datos.
      */
     public static String getApiBaseUrl() {
         String url = properties.getProperty(API_BASE_URL_KEY, DEFAULT_BASE_URL);

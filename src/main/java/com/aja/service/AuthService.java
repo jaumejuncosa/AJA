@@ -66,21 +66,31 @@ public class AuthService {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("Login response status: " + response.statusCode());
             System.out.println("Login response body: " + response.body());
-
-            // COMPROBACIÓN CRÍTICA: Si el servidor falla (502, 500, 404), no intentamos leer JSON
-            if (response.statusCode() != 200) {
-                LoginResponseDto errorResponse = new LoginResponseDto();
-                errorResponse.setSuccess(false);
-                errorResponse.setMessage("El servidor no responde correctamente (Error " + response.statusCode() + ")");
-                return errorResponse;
-            }
+            response.headers().allValues("Set-Cookie").forEach(v -> 
+    System.out.println("DEBUG AUTH Cookie: " + v)
+);
 
             // Parsear respuesta JSON
-            LoginResponseDto loginResponse = objectMapper.readValue(response.body(), LoginResponseDto.class);
+            LoginResponseDto loginResponse;
+            if (response.statusCode() == 200) {
+                loginResponse = objectMapper.readValue(response.body(), LoginResponseDto.class);
+            } else {
+                try {
+                    loginResponse = objectMapper.readValue(response.body(), LoginResponseDto.class);
+                } catch (Exception e) {
+                    loginResponse = new LoginResponseDto();
+                    loginResponse.setSuccess(false);
+                    loginResponse.setMessage("Error " + response.statusCode() + ": Acceso denegado.");
+                }
+                return loginResponse;
+            }
 
             // Si el login fue exitoso, almacenar la información del usuario
             if (loginResponse.isSuccess() && loginResponse.getMessage() instanceof java.util.Map) {
-                this.token = loginResponse.getToken();
+                // Solo actualizamos el token si el servidor nos proporciona uno nuevo
+                if (loginResponse.getToken() != null && !loginResponse.getToken().isBlank()) {
+                    this.token = loginResponse.getToken();
+                }
                 
                 // Convertir el Map a UserDto
                 @SuppressWarnings("unchecked")

@@ -1,7 +1,7 @@
 package com.aja.model;
 
 /**
- * Objeto para mover los datos de los eventos entre el servidor y la aplicación.
+ * Ficha para guardar y mover los datos de las actividades.
  */
 public class EventDto {
 
@@ -12,70 +12,70 @@ public class EventDto {
     private String location;
 
     /**
-     * El ID único que tiene el evento en la base de datos.
+     * El número de identificación de la actividad.
      */
     public Long getId() {
         return id;
     }
 
     /**
-     * Guardamos el ID del evento.
+     * Guardamos el número de identificación.
      */
     public void setId(Long id) {
         this.id = id;
     }
 
     /**
-     * El nombre o título que le hemos dado al evento.
+     * El nombre de la actividad.
      */
     public String getTitle() {
         return title;
     }
 
     /**
-     * Guardamos el título del evento.
+     * Guardamos el nombre.
      */
     public void setTitle(String title) {
         this.title = title;
     }
 
     /**
-     * El texto con todos los detalles de lo que va a pasar en el evento.
+     * Detalles sobre qué pasará en la actividad.
      */
     public String getDescription() {
         return description;
     }
 
     /**
-     * Guardamos la descripción del evento.
+     * Guardamos los detalles.
      */
     public void setDescription(String description) {
         this.description = description;
     }
 
     /**
-     * Cuándo se va a celebrar el evento (viene como texto desde la API).
+     * Cuándo se hará la actividad.
      */
     public String getDate() {
         return date;
     }
 
     /**
-     * Guardamos la fecha del evento.
+     * Guardamos la fecha.
      */
     public void setDate(String date) {
         this.date = date;
     }
 
     /**
-     * El sitio o lugar donde se hará el evento.
+     * Dónde se hará la actividad.
      */
     public String getLocation() {
         return location;
     }
 
     /**
-     * Guardamos la ubicación del evento.
+     * Guardamos el sitio.
      */
     public void setLocation(String location) {
         this.location = location;
