@@ -6,7 +6,7 @@
 
     <groupId>com.aja</groupId>
     <artifactId>aja-desktop</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
     <name>AJA Desktop</name>
     <description>Aplicación de escritorio AJA</description>
@@ -65,6 +65,18 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.aja.App</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <outputDirectory>${project.basedir}/apidocs</outputDirectory>
+                    <reportOutputDirectory>${project.basedir}/apidocs</reportOutputDirectory>
+                    <encoding>UTF-8</encoding>
+                    <charset>UTF-8</charset>
+                    <docencoding>UTF-8</docencoding>
                 </configuration>
             </plugin>
         </plugins>

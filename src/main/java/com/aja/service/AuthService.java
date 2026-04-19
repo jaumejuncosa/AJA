@@ -66,9 +66,8 @@ public class AuthService {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("Login response status: " + response.statusCode());
             System.out.println("Login response body: " + response.body());
-            response.headers().allValues("Set-Cookie").forEach(v -> 
-    System.out.println("DEBUG AUTH Cookie: " + v)
-);
+            //response.headers().allValues("Set-Cookie").forEach(v -> 
+            //System.out.println("DEBUG AUTH Cookie: " + v));
 
             // Parsear respuesta JSON
             LoginResponseDto loginResponse;

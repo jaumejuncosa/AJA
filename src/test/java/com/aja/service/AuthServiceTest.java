@@ -1,109 +1,105 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
- */
 package com.aja.service;
 
 import com.aja.model.LoginResponseDto;
 import com.aja.model.UserDto;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- *
- * @author Usuario
- */
 public class AuthServiceTest {
-    
-    public AuthServiceTest() {
-    }
 
-    @org.junit.jupiter.api.BeforeAll
-    public static void setUpClass() throws Exception {
-    }
+    private AuthService instance;
 
-    @org.junit.jupiter.api.AfterAll
-    public static void tearDownClass() throws Exception {
-    }
-
-    @org.junit.jupiter.api.BeforeEach
-    public void setUp() throws Exception {
-    }
-
-    @org.junit.jupiter.api.AfterEach
-    public void tearDown() throws Exception {
-    }
-    
-    /**
-     * Test of getInstance method, of class AuthService.
-     */
-    @org.junit.jupiter.api.Test
-public void testGetInstance() {
-    System.out.println("getInstance");
-    AuthService instance1 = AuthService.getInstance();
-    AuthService instance2 = AuthService.getInstance();
-    
-    // Comprobamos que no sea nulo
-    assertNotNull(instance1, "La instancia no debería ser nula");
-    
-    // Comprobamos que siempre devuelva el mismo objeto (Singleton)
-    assertEquals(instance1, instance2, "Debería devolver la misma instancia siempre");
-}
-
-    /**
-     * Test of authenticate method, of class AuthService.
-     */
-    @org.junit.jupiter.api.Test
-    public void testAuthenticate() {
-        System.out.println("authenticate");
-        AuthService instance = AuthService.getInstance();
-    
-    // Aquí puedes meter una prueba real más adelante. 
-    // Por ahora, solo nos aseguramos de que no explote por ser null.
-    assertNotNull(instance);
+    @BeforeEach
+    public void setUp() {
+        instance = AuthService.getInstance();
+        instance.logout(); // Limpiamos sesión antes de cada test
     }
 
     /**
-     * Test of getCurrentUser method, of class AuthService.
+     * Singleton: siempre devuelve la misma instancia.
      */
-    @org.junit.jupiter.api.Test
-    public void testGetCurrentUser() {
-        System.out.println("getCurrentUser");
-        AuthService instance = AuthService.getInstance();
-    
-    // Aquí puedes meter una prueba real más adelante. 
-    // Por ahora, solo nos aseguramos de que no explote por ser null.
-    assertNotNull(instance);
+    @Test
+    public void testGetInstance() {
+        System.out.println("getInstance");
+        AuthService instance1 = AuthService.getInstance();
+        AuthService instance2 = AuthService.getInstance();
+        assertNotNull(instance1);
+        assertSame(instance1, instance2, "Debe ser la misma instancia (Singleton)");
     }
 
     /**
-     * Test of logout method, of class AuthService.
+     * Login con credenciales correctas devuelve éxito y guarda el usuario.
      */
-    @org.junit.jupiter.api.Test
+    @Test
+    public void testAuthenticate_credencialesCorrectas() {
+        System.out.println("authenticate - credenciales correctas");
+        LoginResponseDto response = instance.authenticate("admin", "1234");
+        assertTrue(response.isSuccess(), "El login debería ser exitoso");
+        assertNotNull(instance.getCurrentUser(), "Debería haber un usuario en sesión");
+        assertEquals("admin", instance.getCurrentUser().getUsername());
+    }
+
+    /**
+     * Login con credenciales incorrectas devuelve fallo.
+     */
+    @Test
+    public void testAuthenticate_credencialesIncorrectas() {
+        System.out.println("authenticate - credenciales incorrectas");
+        LoginResponseDto response = instance.authenticate("usuario_inexistente", "password_malo");
+        assertFalse(response.isSuccess(), "El login debería fallar");
+        assertNull(instance.getCurrentUser(), "No debería haber usuario en sesión");
+    }
+
+    /**
+     * Login con null devuelve fallo controlado.
+     */
+    @Test
+    public void testAuthenticate_credencialesNulas() {
+        System.out.println("authenticate - credenciales nulas");
+        LoginResponseDto response = instance.authenticate(null, null);
+        assertFalse(response.isSuccess(), "El login con null debería fallar");
+    }
+
+    /**
+     * getCurrentUser devuelve null si no hay sesión.
+     */
+    @Test
+    public void testGetCurrentUser_sinSesion() {
+        System.out.println("getCurrentUser - sin sesión");
+        assertNull(instance.getCurrentUser(), "Sin login no debería haber usuario");
+    }
+
+    /**
+     * getCurrentUser devuelve el usuario tras login exitoso.
+     */
+    @Test
+    public void testGetCurrentUser_conSesion() {
+        System.out.println("getCurrentUser - con sesión");
+        instance.authenticate("admin", "1234");
+        UserDto user = instance.getCurrentUser();
+        assertNotNull(user);
+        assertNotNull(user.getUsername());
+        assertNotNull(user.getEmail());
+    }
+
+    /**
+     * logout limpia la sesión correctamente.
+     */
+    @Test
     public void testLogout() {
         System.out.println("logout");
-        AuthService instance = AuthService.getInstance();
-    
-    // Aquí puedes meter una prueba real más adelante. 
-    // Por ahora, solo nos aseguramos de que no explote por ser null.
-    assertNotNull(instance);
+        instance.authenticate("admin", "1234");
+        assertNotNull(instance.getCurrentUser(), "Debería haber sesión antes del logout");
+        instance.logout();
+        assertNull(instance.getCurrentUser(), "Después del logout no debería haber sesión");
     }
 
     /**
-     * Test of getToken method, of class AuthService.
+     * getToken devuelve null si no hay sesión.
      */
-    @org.junit.jupiter.api.Test
-    public void testGetToken() {
-        System.out.println("getToken");
-        AuthService instance = AuthService.getInstance();
-    
-    // Aquí puedes meter una prueba real más adelante. 
-    // Por ahora, solo nos aseguramos de que no explote por ser null.
-    assertNotNull(instance);
+    @Test
+    public void testGetToken_sinSesion() {
+        System.out.println("getToken - sin sesión");
+        assertNull(instance.getToken(), "Sin login el token debería ser null");
     }
-    
 }
